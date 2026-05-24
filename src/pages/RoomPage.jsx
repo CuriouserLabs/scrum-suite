@@ -4,7 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import { useRoom } from '../hooks/useRoom';
 import ConnectionStatus from '../components/ConnectionStatus';
 import VotingDeck from '../components/VotingDeck';
-import RevealedCards from '../components/RevealedCards';
+import VoteBoard from '../components/VoteBoard';
 import './RoomPage.css';
 
 export default function RoomPage() {
@@ -144,41 +144,52 @@ export default function RoomPage() {
           </div>
         </aside>
 
-        {/* Main voting area */}
+        {/* Main voting area — always split into two zones */}
         <main className="voting-area">
           {!roomState ? (
             <div className="voting-placeholder">
               <div className="spinner" />
               <p>Connecting to room…</p>
             </div>
-          ) : roomState.revealed ? (
-            <RevealedCards roomState={roomState} />
           ) : (
-            <div className="voting-area-inner">
-              {/* Story title */}
-              {isHost ? (
-                <input
-                  className="story-title-input"
-                  placeholder="What are we estimating? (optional)"
-                  value={roomState.storyTitle || ''}
-                  onChange={(e) => setStoryTitle(e.target.value)}
-                  maxLength={80}
-                />
-              ) : roomState.storyTitle ? (
-                <div className="story-title-display">{roomState.storyTitle}</div>
-              ) : null}
+            <>
+              {/* Zone 1 — team vote cards (face-down → reveal) */}
+              <div className="zone-votes">
+                {/* Story title */}
+                {isHost ? (
+                  <input
+                    className="story-title-input"
+                    placeholder="What are we estimating? (optional)"
+                    value={roomState.storyTitle || ''}
+                    onChange={(e) => setStoryTitle(e.target.value)}
+                    maxLength={80}
+                  />
+                ) : roomState.storyTitle ? (
+                  <div className="story-title-display">{roomState.storyTitle}</div>
+                ) : null}
 
-              <p className="voting-hint">
-                {myVote !== undefined
-                  ? 'Your vote is in — change it anytime before reveal'
-                  : 'Pick your estimate'}
-              </p>
-              <VotingDeck
-                selectedValue={myVote}
-                onVote={submitVote}
-                disabled={roomState.revealed}
-              />
-            </div>
+                <VoteBoard roomState={roomState} userId={user.id} />
+              </div>
+
+              {/* Divider */}
+              <div className="zone-divider" />
+
+              {/* Zone 2 — this user's voting deck */}
+              <div className="zone-deck">
+                <p className="voting-hint">
+                  {roomState.revealed
+                    ? 'Round complete — host can start a new round'
+                    : myVote !== undefined
+                    ? 'Your vote is in — change it anytime before reveal'
+                    : 'Pick your estimate'}
+                </p>
+                <VotingDeck
+                  selectedValue={myVote}
+                  onVote={submitVote}
+                  disabled={roomState.revealed}
+                />
+              </div>
+            </>
           )}
         </main>
       </div>
