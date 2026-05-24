@@ -1,0 +1,146 @@
+.revealed-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 800px;
+  padding: 1rem 0;
+}
+
+.revealed-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* Flip card container */
+.revealed-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+}
+
+.flip-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  perspective: 600px;
+}
+
+.flip-card-inner {
+  width: 68px;
+  height: 96px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotateY(180deg); /* start face-down */
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(0deg); /* flip to face-up */
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Face-down: dark card back */
+.flip-card-back {
+  background: var(--card-back);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transform: rotateY(180deg);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 1.5rem;
+}
+
+/* Face-up: white card */
+.flip-card-front {
+  background: var(--surface);
+  border: 2px solid transparent;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.flip-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.flip-name {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Summary */
+.results-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-value {
+  color: var(--accent);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Distribution bar chart */
+.vote-distribution {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 72px;
+}
+
+.dist-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dist-bar {
+  width: 28px;
+  background: var(--primary);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.4s ease;
+  opacity: 0.8;
+}
+
+.dist-label {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}

@@ -1,0 +1,35 @@
+.conn-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-connecting {
+  color: var(--text-muted);
+}
+
+.status-connecting .conn-dot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.status-ready {
+  color: var(--success);
+}
+
+.status-error {
+  color: var(--danger);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
