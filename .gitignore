@@ -25,6 +25,11 @@ dist-ssr
 
 # AI tool config (machine-specific)
 .claude/
+.agents/
+skills-lock.json
+
+# Firebase local cache
+.firebase/
 
 # Environment variables
 .env
