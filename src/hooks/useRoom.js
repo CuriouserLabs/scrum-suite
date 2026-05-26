@@ -1,247 +1,138 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Peer from 'peerjs';
-import { roomPeerId, send, broadcast } from '../utils/peerUtils';
+import {
+  doc, getDoc, setDoc, updateDoc, onSnapshot,
+  serverTimestamp, arrayUnion, arrayRemove, deleteField,
+} from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
-const INITIAL_STATE = (user) => ({
-  participants: [{ id: user.id, displayName: user.displayName, isHost: true }],
-  votes: {},
-  revealed: false,
-  round: 1,
-  storyTitle: '',
-  coHosts: [],
-});
-
-const MAX_RECONNECT = 4;
+// Convert Firestore participants map → array the UI expects
+function normalizeState(data) {
+  if (!data) return null;
+  return {
+    ...data,
+    participants: Object.entries(data.participants || {}).map(([id, p]) => ({
+      id,
+      ...p,
+    })),
+  };
+}
 
 export function useRoom(roomId, user) {
-  const peerRef = useRef(null);
-  const roleRef = useRef(null);           // 'host' | 'client'
-  const connsRef = useRef({});            // host: peerId→conn map
-  const connRef = useRef(null);           // client: single conn to host
-  const stateRef = useRef(null);
-  const lastStateRef = useRef(null);      // client: last received state (for takeover)
-
   const [role, setRole] = useState(null);
   const [roomState, setRoomState] = useState(null);
   const [status, setStatus] = useState('connecting');
-
-  const pushState = useCallback((next) => {
-    stateRef.current = next;
-    setRoomState(next);
-    broadcast(connsRef.current, { type: 'state', payload: next });
-  }, []);
-
-  const updateState = useCallback((updater) => {
-    const next = typeof updater === 'function' ? updater(stateRef.current) : updater;
-    pushState(next);
-  }, [pushState]);
+  const roomStateRef = useRef(null); // stable ref for callbacks
 
   useEffect(() => {
-    let destroyed = false;
-    let reconnectAttempts = 0;
+    const roomRef = doc(db, 'rooms', roomId);
+    let unsubscribe = null;
+    let left = false;
 
-    // --- Shared host connection listener (reused on co-host takeover) ---
-    function attachHostListeners(hostPeer) {
-      hostPeer.on('connection', (conn) => {
-        conn.on('open', () => {
-          connsRef.current[conn.peer] = conn;
-          send(conn, { type: 'state', payload: stateRef.current });
+    async function init() {
+      const snap = await getDoc(roomRef);
+
+      if (left) return;
+
+      if (!snap.exists()) {
+        // Room does not exist → create it, we are the host
+        await setDoc(roomRef, {
+          hostId: user.id,
+          participants: {
+            [user.id]: { displayName: user.displayName, isHost: true },
+          },
+          votes: {},
+          revealed: false,
+          round: 1,
+          storyTitle: '',
+          coHosts: [],
+          createdAt: serverTimestamp(),
         });
-
-        conn.on('data', (msg) => {
-          if (msg.type === 'join') {
-            updateState((prev) => {
-              if (prev.participants.find((p) => p.id === msg.user.id)) return prev;
-              return { ...prev, participants: [...prev.participants, msg.user] };
-            });
-          } else if (msg.type === 'vote') {
-            updateState((prev) => ({
-              ...prev,
-              votes: { ...prev.votes, [msg.userId]: msg.value },
-            }));
-          } else if (msg.type === 'leave') {
-            updateState((prev) => ({
-              ...prev,
-              participants: prev.participants.filter((p) => p.id !== msg.userId),
-              votes: Object.fromEntries(
-                Object.entries(prev.votes).filter(([k]) => k !== msg.userId)
-              ),
-            }));
-          }
-        });
-
-        conn.on('close', () => {
-          delete connsRef.current[conn.peer];
-        });
-      });
-    }
-
-    // --- Connect as client (used on first join and on reconnect) ---
-    function connectAsClient() {
-      if (destroyed) return;
-      const clientPeer = new Peer();
-      peerRef.current = clientPeer;
-
-      clientPeer.on('open', () => {
-        if (destroyed) return;
-        const conn = clientPeer.connect(roomPeerId(roomId), { reliable: true });
-        connRef.current = conn;
-
-        conn.on('open', () => {
-          if (destroyed) return;
-          reconnectAttempts = 0;
-          setStatus('connected');
-          send(conn, {
-            type: 'join',
-            user: { id: user.id, displayName: user.displayName, isHost: false },
-          });
-        });
-
-        conn.on('data', (msg) => {
-          if (msg.type === 'state') {
-            lastStateRef.current = msg.payload;
-            setRoomState(msg.payload);
-          }
-        });
-
-        conn.on('close', () => {
-          if (destroyed) return;
-          const lastState = lastStateRef.current;
-          if (lastState?.coHosts?.includes(user.id)) {
-            attemptHostTakeover(lastState);
-          } else {
-            scheduleReconnect();
-          }
-        });
-
-        conn.on('error', () => { if (!destroyed) scheduleReconnect(); });
-      });
-
-      clientPeer.on('error', () => { if (!destroyed) scheduleReconnect(); });
-    }
-
-    // --- Retry connecting as a regular client ---
-    function scheduleReconnect() {
-      if (destroyed) return;
-      reconnectAttempts++;
-      if (reconnectAttempts > MAX_RECONNECT) {
-        setStatus('disconnected');
-        return;
-      }
-      setStatus('reconnecting');
-      peerRef.current?.destroy();
-      setTimeout(() => { if (!destroyed) connectAsClient(); }, 1500);
-    }
-
-    // --- Co-host claims the room peer ID after primary host disconnects ---
-    function attemptHostTakeover(lastState) {
-      if (destroyed) return;
-      setStatus('connecting');
-      peerRef.current?.destroy();
-
-      const hostPeer = new Peer(roomPeerId(roomId));
-      peerRef.current = hostPeer;
-
-      hostPeer.on('open', () => {
-        if (destroyed) return;
-        roleRef.current = 'host';
         setRole('host');
         setStatus('ready');
-        connsRef.current = {};
-        connRef.current = null;
-        // Restore last known state, marking self as host
-        const nextState = {
-          ...lastState,
-          participants: lastState.participants.map((p) =>
-            p.id === user.id ? { ...p, isHost: true } : p
-          ),
-        };
-        stateRef.current = nextState;
-        setRoomState(nextState);
-        attachHostListeners(hostPeer);
-      });
+      } else {
+        // Room exists → join as participant (or rejoin as host/co-host)
+        const data = snap.data();
+        const isOriginalHost = data.hostId === user.id;
+        const isCoHost = data.coHosts?.includes(user.id);
+        setRole(isOriginalHost || isCoHost ? 'host' : 'client');
+        setStatus('connected');
 
-      hostPeer.on('error', () => {
-        // Another co-host claimed it first — fall back to client
-        if (!destroyed) connectAsClient();
+        // Register ourselves if not already in participants
+        if (!data.participants?.[user.id]) {
+          await updateDoc(roomRef, {
+            [`participants.${user.id}`]: {
+              displayName: user.displayName,
+              isHost: isOriginalHost,
+            },
+          });
+        }
+      }
+
+      if (left) return;
+
+      // Real-time listener
+      unsubscribe = onSnapshot(roomRef, (snap) => {
+        if (!snap.exists()) {
+          setStatus('disconnected');
+          return;
+        }
+        const data = snap.data();
+        // Re-evaluate role whenever state updates (co-host may have changed)
+        const isOriginalHost = data.hostId === user.id;
+        const isCoHost = data.coHosts?.includes(user.id);
+        setRole(isOriginalHost || isCoHost ? 'host' : 'client');
+
+        const normalized = normalizeState(data);
+        roomStateRef.current = normalized;
+        setRoomState(normalized);
+      }, () => {
+        setStatus('error');
       });
     }
 
-    // --- Try to claim the host peer ID ---
-    const peer = new Peer(roomPeerId(roomId));
-    peerRef.current = peer;
-
-    peer.on('open', () => {
-      if (destroyed) return;
-      roleRef.current = 'host';
-      setRole('host');
-      setStatus('ready');
-      const initial = INITIAL_STATE(user);
-      stateRef.current = initial;
-      setRoomState(initial);
-      attachHostListeners(peer);
-    });
-
-    peer.on('error', (err) => {
-      if (destroyed) return;
-      if (err.type === 'unavailable-id') {
-        roleRef.current = 'client';
-        setRole('client');
-        setStatus('connecting');
-        peer.destroy();
-        connectAsClient();
-      } else {
-        setStatus('error');
-      }
-    });
+    init().catch(() => { if (!left) setStatus('error'); });
 
     return () => {
-      destroyed = true;
-      if (connRef.current?.open) {
-        send(connRef.current, { type: 'leave', userId: user.id });
-      }
-      peerRef.current?.destroy();
+      left = true;
+      unsubscribe?.();
+      // Remove self from participants on clean leave
+      updateDoc(doc(db, 'rooms', roomId), {
+        [`participants.${user.id}`]: deleteField(),
+        [`votes.${user.id}`]: deleteField(),
+      }).catch(() => {});
     };
-  }, [roomId, user.id, user.displayName, updateState]);
+  }, [roomId, user.id, user.displayName]);
 
   const submitVote = useCallback((value) => {
-    if (roleRef.current === 'host') {
-      updateState((prev) => ({
-        ...prev,
-        votes: { ...prev.votes, [user.id]: value },
-      }));
-    } else {
-      send(connRef.current, { type: 'vote', userId: user.id, value });
-    }
-  }, [user.id, updateState]);
+    updateDoc(doc(db, 'rooms', roomId), {
+      [`votes.${user.id}`]: value,
+    }).catch(console.error);
+  }, [roomId, user.id]);
 
   const revealVotes = useCallback(() => {
-    updateState((prev) => ({ ...prev, revealed: true }));
-  }, [updateState]);
+    updateDoc(doc(db, 'rooms', roomId), { revealed: true }).catch(console.error);
+  }, [roomId]);
 
   const resetRound = useCallback(() => {
-    updateState((prev) => ({
-      ...prev,
+    const current = roomStateRef.current;
+    updateDoc(doc(db, 'rooms', roomId), {
       votes: {},
       revealed: false,
-      round: prev.round + 1,
-    }));
-  }, [updateState]);
+      round: (current?.round ?? 1) + 1,
+    }).catch(console.error);
+  }, [roomId]);
 
   const setStoryTitle = useCallback((title) => {
-    updateState((prev) => ({ ...prev, storyTitle: title }));
-  }, [updateState]);
+    updateDoc(doc(db, 'rooms', roomId), { storyTitle: title }).catch(console.error);
+  }, [roomId]);
 
   const makeCoHost = useCallback((userId) => {
-    updateState((prev) => {
-      const coHosts = prev.coHosts || [];
-      const already = coHosts.includes(userId);
-      return {
-        ...prev,
-        coHosts: already ? coHosts.filter((id) => id !== userId) : [...coHosts, userId],
-      };
-    });
-  }, [updateState]);
+    const current = roomStateRef.current;
+    const alreadyCoHost = current?.coHosts?.includes(userId);
+    updateDoc(doc(db, 'rooms', roomId), {
+      coHosts: alreadyCoHost ? arrayRemove(userId) : arrayUnion(userId),
+    }).catch(console.error);
+  }, [roomId]);
 
   return { roomState, status, role, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost };
 }

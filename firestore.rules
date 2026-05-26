@@ -1,0 +1,118 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: rooms
+// Document ID: 8-character alphanumeric room code (e.g. "a1b2c3d4")
+// Fields:
+//   - hostId:      string (required, immutable) — nanoid user ID of creator
+//   - participants: map (required) — keyed by userId
+//       { displayName: string(1–50), isHost: bool }
+//   - votes:       map (required) — keyed by userId, value is number or "?"
+//   - revealed:    bool (required)
+//   - round:       number int >= 1 (required)
+//   - storyTitle:  string 0–200 chars (required)
+//   - coHosts:     list of userId strings, max 50 (required)
+//   - createdAt:   timestamp (required, immutable)
+//
+// Note: This app uses client-generated nanoid user IDs stored in
+// localStorage rather than Firebase Auth. Rules therefore cannot
+// enforce per-user identity but DO enforce strict data shape and
+// size limits to prevent corruption and DoS.
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isValidRoomId(roomId) {
+      return roomId.size() == 8;
+    }
+
+    function isValidDisplayName(name) {
+      return name is string && name.size() >= 1 && name.size() <= 50;
+    }
+
+    function isValidUserId(uid) {
+      return uid is string && uid.size() >= 1 && uid.size() <= 64;
+    }
+
+    function isValidVoteValue(v) {
+      return (v is number && v >= 0 && v <= 9999) || v == '?';
+    }
+
+    function isValidParticipantsMap(p) {
+      return p is map && p.size() <= 100;
+    }
+
+    function isValidVotesMap(v) {
+      return v is map && v.size() <= 100;
+    }
+
+    function isValidCoHosts(c) {
+      return c is list && c.size() <= 100;
+    }
+
+    // Full document validator used on create
+    function isValidRoomCreate(data) {
+      return data.keys().hasOnly(['hostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
+          && data.keys().hasAll(['hostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
+          && isValidUserId(data.hostId)
+          && isValidParticipantsMap(data.participants)
+          && isValidVotesMap(data.votes)
+          && data.revealed is bool
+          && data.revealed == false
+          && data.round is int
+          && data.round == 1
+          && data.storyTitle is string
+          && data.storyTitle.size() <= 200
+          && isValidCoHosts(data.coHosts)
+          && data.createdAt is timestamp;
+    }
+
+    // Post-update full document validator used on update
+    function isValidRoomUpdate(after, before) {
+      // Only known fields allowed in the resulting document
+      return after.keys().hasOnly(['hostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
+          // Immutable fields must not change
+          && after.hostId == before.hostId
+          && after.createdAt == before.createdAt
+          // Type and size validation
+          && isValidParticipantsMap(after.participants)
+          && isValidVotesMap(after.votes)
+          && after.revealed is bool
+          && after.round is int
+          && after.round >= 1
+          && after.round <= 10000
+          && after.storyTitle is string
+          && after.storyTitle.size() <= 200
+          && isValidCoHosts(after.coHosts);
+    }
+
+    // ===============================================================
+    // rooms/{roomId}
+    // ===============================================================
+    match /rooms/{roomId} {
+      // Anyone who knows the room code can read it.
+      // Room codes are 8-char secrets shared only with the team.
+      allow read: if isValidRoomId(roomId);
+
+      // Create: only if room ID is 8 chars and data is well-formed.
+      // The creating client sets themselves as host.
+      allow create: if isValidRoomId(roomId)
+                    && isValidRoomCreate(request.resource.data);
+
+      // Update: data shape must remain valid; immutable fields protected.
+      allow update: if isValidRoomId(roomId)
+                    && isValidRoomUpdate(request.resource.data, resource.data);
+
+      // Clients cannot delete rooms (rooms expire naturally / host navigates away)
+      allow delete: if false;
+    }
+  }
+}

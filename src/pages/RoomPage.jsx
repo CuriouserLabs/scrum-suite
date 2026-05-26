@@ -47,6 +47,25 @@ export default function RoomPage() {
   const myVote = roomState?.votes?.[user.id];
   const hasAnyVote = roomState && Object.keys(roomState.votes).length > 0;
 
+  // Local story title — prevents cursor-jump from Firestore echo
+  const [localTitle, setLocalTitle] = useState('');
+  const lastWrittenTitleRef = useRef('');
+  const titleDebounceRef = useRef(null);
+  useEffect(() => {
+    const remote = roomState?.storyTitle || '';
+    if (remote !== lastWrittenTitleRef.current) {
+      lastWrittenTitleRef.current = remote;
+      setLocalTitle(remote);
+    }
+  }, [roomState?.storyTitle]);
+  const handleTitleChange = (e) => {
+    const val = e.target.value;
+    setLocalTitle(val);
+    lastWrittenTitleRef.current = val;
+    clearTimeout(titleDebounceRef.current);
+    titleDebounceRef.current = setTimeout(() => setStoryTitle(val), 400);
+  };
+
   // Dynamic page title
   useEffect(() => {
     document.title = `Room ${roomId} · Sprint Poker`;
@@ -88,7 +107,7 @@ export default function RoomPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (status === 'disconnected' && role === 'client') {
+  if (status === 'disconnected') {
     return (
       <div className="room-overlay">
         <div className="room-overlay-card">
@@ -199,8 +218,8 @@ export default function RoomPage() {
                   <input
                     className="story-title-input"
                     placeholder="What are we estimating? (optional)"
-                    value={roomState.storyTitle || ''}
-                    onChange={(e) => setStoryTitle(e.target.value)}
+                    value={localTitle}
+                    onChange={handleTitleChange}
                     maxLength={80}
                   />
                 ) : roomState.storyTitle ? (
