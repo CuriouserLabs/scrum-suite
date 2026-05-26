@@ -111,8 +111,10 @@ service cloud.firestore {
       allow update: if isValidRoomId(roomId)
                     && isValidRoomUpdate(request.resource.data, resource.data);
 
-      // Clients cannot delete rooms (rooms expire naturally / host navigates away)
-      allow delete: if false;
+      // Allow client-initiated delete so the last participant can clean up.
+      // Guarded by the room-ID format check; the actual "last person out"
+      // logic is enforced in the app via a transaction.
+      allow delete: if isValidRoomId(roomId);
     }
   }
 }

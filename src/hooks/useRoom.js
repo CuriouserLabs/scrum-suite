@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  doc, getDoc, setDoc, updateDoc, onSnapshot,
-  serverTimestamp, arrayUnion, arrayRemove, deleteField,
+  doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+  runTransaction, serverTimestamp, arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 
@@ -33,8 +33,12 @@ export function useRoom(roomId, user) {
 
       if (left) return;
 
-      if (!snap.exists()) {
-        // Room does not exist → create it, we are the host
+      const isStaleEmpty = snap.exists()
+        && Object.keys(snap.data().participants || {}).length === 0;
+
+      if (!snap.exists() || isStaleEmpty) {
+        // Room does not exist, or was abandoned (all participants left via
+        // browser crash — empty participants map left behind). Claim as host.
         await setDoc(roomRef, {
           hostId: user.id,
           participants: {
@@ -50,7 +54,7 @@ export function useRoom(roomId, user) {
         setRole('host');
         setStatus('ready');
       } else {
-        // Room exists → join as participant (or rejoin as host/co-host)
+        // Active room — join as participant (or rejoin as host/co-host)
         const data = snap.data();
         const isOriginalHost = data.hostId === user.id;
         const isCoHost = data.coHosts?.includes(user.id);
@@ -95,10 +99,20 @@ export function useRoom(roomId, user) {
     return () => {
       left = true;
       unsubscribe?.();
-      // Remove self from participants on clean leave
-      updateDoc(doc(db, 'rooms', roomId), {
-        [`participants.${user.id}`]: deleteField(),
-        [`votes.${user.id}`]: deleteField(),
+      // Atomically remove self; delete the whole room if we were the last one.
+      runTransaction(db, async (tx) => {
+        const snap = await tx.get(roomRef);
+        if (!snap.exists()) return;
+        const remaining = Object.keys(snap.data().participants || {})
+          .filter((id) => id !== user.id);
+        if (remaining.length === 0) {
+          tx.delete(roomRef);
+        } else {
+          tx.update(roomRef, {
+            [`participants.${user.id}`]: deleteField(),
+            [`votes.${user.id}`]: deleteField(),
+          });
+        }
       }).catch(() => {});
     };
   }, [roomId, user.id, user.displayName]);
