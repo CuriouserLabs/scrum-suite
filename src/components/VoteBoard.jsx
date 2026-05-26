@@ -87,7 +87,7 @@ export default function VoteBoard({ roomState, userId }) {
                 </div>
               </div>
               <div className={`vote-slot-name ${isMe ? 'is-me' : ''}`}>
-                {p.displayName}
+                <span className="vote-slot-name-text">{p.displayName}</span>
                 {isMe && <span className="you-tag">you</span>}
               </div>
             </div>

@@ -118,25 +118,32 @@
 .vote-slot-name {
   color: var(--text-muted);
   font-size: 0.72rem;
-  max-width: 72px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
+  max-width: 88px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
 }
 
 .vote-slot-name.is-me {
   color: #a5b4fc;
 }
 
+.vote-slot-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .you-tag {
-  display: inline-block;
-  margin-left: 0.3rem;
   font-size: 0.62rem;
   background: rgba(99, 102, 241, 0.2);
   color: #a5b4fc;
   border-radius: 3px;
   padding: 0 0.3rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Distribution bar chart */
