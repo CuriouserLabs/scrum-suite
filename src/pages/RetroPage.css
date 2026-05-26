@@ -9,21 +9,24 @@
 /* ── Toast ── */
 .retro-toast {
   position: fixed;
-  top: 80px;
+  bottom: 5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--surface-dark);
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-light);
   padding: 0.6rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
   z-index: 100;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  animation: toastIn 0.3s ease;
+  white-space: nowrap;
+  animation: toastIn 0.25s ease;
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
@@ -32,8 +35,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 1rem;
   flex-shrink: 0;
 }
 
@@ -60,23 +65,20 @@
 
 /* Reuse the back-btn and copy-btn patterns from RoomPage */
 .retro-header .back-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: none;
+  border: none;
   color: var(--text-muted);
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
 }
 
 .retro-header .back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
   color: var(--text-light);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .retro-header .copy-btn {
@@ -132,11 +134,20 @@
   gap: 0.6rem;
   padding: 0.45rem 0.5rem;
   border-radius: 8px;
-  transition: background 0.15s;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+  animation: slideIn 0.25s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .retro-participant.self {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.18);
 }
 
 .retro-participant-avatar {
@@ -195,18 +206,18 @@
 }
 
 .retro-participant-badges .lead-badge {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
 }
 
 .retro-participant-badges .host-badge {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
 }
 
 .retro-participant-badges .cohost-badge {
-  background: rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
 }
 
 .retro-participant-card-count {
