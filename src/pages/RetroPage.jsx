@@ -16,7 +16,6 @@ export default function RetroPage() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
-  const [activeTab, setActiveTab] = useState('board');
 
   const {
     retroState, status, role,
@@ -148,26 +147,6 @@ export default function RetroPage() {
         </button>
       </div>
 
-      <div className="retro-tabs">
-        <button
-          className={`retro-tab ${activeTab === 'board' ? 'retro-tab--active' : ''}`}
-          onClick={() => setActiveTab('board')}
-        >
-          Retro Board
-        </button>
-        <button
-          className={`retro-tab ${activeTab === 'action-items' ? 'retro-tab--active' : ''}`}
-          onClick={() => setActiveTab('action-items')}
-        >
-          Previous Action Items
-          {retroState?.previousActionItems && Object.keys(retroState.previousActionItems).length > 0 && (
-            <span className="retro-tab__badge">
-              {Object.keys(retroState.previousActionItems).length}
-            </span>
-          )}
-        </button>
-      </div>
-
       <div className="retro-body">
         {/* Participants sidebar */}
         <aside className="retro-participants">
@@ -207,21 +186,13 @@ export default function RetroPage() {
           </div>
         </aside>
 
-        {/* Main area — switches between retro board and action items */}
+        {/* Main columns area */}
         <main className="retro-board">
           {!retroState ? (
             <div className="retro-loading">
               <div className="spinner" />
               <p>Connecting to retro…</p>
             </div>
-          ) : activeTab === 'action-items' ? (
-            <PreviousActionItems
-              items={retroState.previousActionItems || {}}
-              isHost={isHost}
-              onAdd={addActionItem}
-              onToggle={toggleActionItem}
-              onDelete={deleteActionItem}
-            />
           ) : (
             <div className="retro-columns">
               {activeColumns.map((col) => (
@@ -240,6 +211,13 @@ export default function RetroPage() {
                   onToggleVote={toggleVote}
                 />
               ))}
+              <PreviousActionItems
+                items={retroState.previousActionItems || {}}
+                isHost={isHost}
+                onAdd={addActionItem}
+                onToggle={toggleActionItem}
+                onDelete={deleteActionItem}
+              />
             </div>
           )}
         </main>

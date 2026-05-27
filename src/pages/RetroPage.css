@@ -97,50 +97,6 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* ── Tabs ── */
-.retro-tabs {
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.5rem 1.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.retro-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  margin-bottom: -1px;
-}
-
-.retro-tab:hover {
-  color: var(--text-light);
-}
-
-.retro-tab--active {
-  color: var(--text-light);
-  border-bottom-color: #6366f1;
-}
-
-.retro-tab__badge {
-  background: rgba(99, 102, 241, 0.25);
-  color: #a5b4fc;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 999px;
-}
-
 /* ── Body ── */
 .retro-body {
   flex: 1;

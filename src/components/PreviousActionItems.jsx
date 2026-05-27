@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import './PreviousActionItems.css';
 
+const COLUMN_COLOR = '#14b8a6';
+
 export default function PreviousActionItems({ items, isHost, onAdd, onToggle, onDelete }) {
-  const [newText, setNewText] = useState('');
   const [adding, setAdding] = useState(false);
+  const [newText, setNewText] = useState('');
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -28,31 +30,33 @@ export default function PreviousActionItems({ items, isHost, onAdd, onToggle, on
     .sort((a, b) => a.createdAt - b.createdAt);
 
   return (
-    <div className="pai">
-      <div className="pai__header">
-        <h2 className="pai__title">Previous Action Items</h2>
-        <span className="pai__count">{sorted.length} item{sorted.length !== 1 ? 's' : ''}</span>
+    <div className="retro-column">
+      <div className="retro-column__header" style={{ borderTopColor: COLUMN_COLOR }}>
+        <span className="retro-column__icon" style={{ color: COLUMN_COLOR }}>↩</span>
+        <h3 className="retro-column__title">Previous Action Items</h3>
+        <span className="retro-column__count">{sorted.length}</span>
       </div>
 
-      <div className="pai__list">
+      <div className="retro-column__cards">
         {sorted.length === 0 && (
-          <p className="pai__empty">No action items yet — add one below.</p>
+          <p className="retro-column__empty">No previous action items</p>
         )}
         {sorted.map((item) => (
-          <div key={item.id} className={`pai__item ${item.done ? 'pai__item--done' : ''}`}>
+          <div key={item.id} className={`pai-item ${item.done ? 'pai-item--done' : ''}`}>
             <button
-              className="pai__check"
+              className="pai-item__check"
               onClick={() => onToggle(item.id)}
               title={item.done ? 'Mark incomplete' : 'Mark done'}
+              style={{ borderColor: item.done ? COLUMN_COLOR : undefined, background: item.done ? `${COLUMN_COLOR}22` : undefined }}
             >
               {item.done ? '✓' : ''}
             </button>
-            <span className="pai__text">{item.text}</span>
+            <span className="pai-item__text">{item.text}</span>
             {isHost && (
               <button
-                className="pai__delete"
+                className="pai-item__delete"
                 onClick={() => onDelete(item.id)}
-                title="Delete item"
+                title="Delete"
               >
                 ×
               </button>
@@ -61,12 +65,12 @@ export default function PreviousActionItems({ items, isHost, onAdd, onToggle, on
         ))}
       </div>
 
-      <div className="pai__add">
+      <div className="retro-column__add">
         {adding ? (
-          <div className="pai__add-form">
+          <div className="retro-column__add-form">
             <textarea
               ref={textareaRef}
-              className="pai__add-input"
+              className="retro-column__add-input"
               placeholder="Describe the action item..."
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -74,18 +78,30 @@ export default function PreviousActionItems({ items, isHost, onAdd, onToggle, on
               maxLength={500}
               rows={3}
             />
-            <div className="pai__add-actions">
-              <button className="pai__add-submit" onClick={handleSubmit} disabled={!newText.trim()}>
+            <div className="retro-column__add-actions">
+              <button
+                className="retro-column__add-submit"
+                onClick={handleSubmit}
+                disabled={!newText.trim()}
+                style={{ background: COLUMN_COLOR }}
+              >
                 Add
               </button>
-              <button className="pai__add-cancel" onClick={() => { setNewText(''); setAdding(false); }}>
+              <button
+                className="retro-column__add-cancel"
+                onClick={() => { setNewText(''); setAdding(false); }}
+              >
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <button className="pai__add-btn" onClick={() => setAdding(true)}>
-            + Add action item
+          <button
+            className="retro-column__add-btn"
+            onClick={() => setAdding(true)}
+            style={{ color: COLUMN_COLOR }}
+          >
+            + Add a card
           </button>
         )}
       </div>
