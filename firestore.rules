@@ -138,6 +138,10 @@ service cloud.firestore {
       return c is map && c.size() <= 500;
     }
 
+    function isValidPreviousActionItemsMap(p) {
+      return p is map && p.size() <= 500;
+    }
+
     function isValidColumnsArray(c) {
       return c is list && c.size() <= 20;
     }
@@ -150,8 +154,8 @@ service cloud.firestore {
     }
 
     function isValidRetroCreate(data) {
-      return data.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'settings', 'timer', 'createdAt'])
-          && data.keys().hasAll(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'settings', 'timer', 'createdAt'])
+      return data.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+          && data.keys().hasAll(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
           && isValidUserId(data.hostId)
           && isValidUserId(data.activeHostId)
           && data.activeHostId == data.hostId
@@ -159,6 +163,7 @@ service cloud.firestore {
           && isValidCoHosts(data.coHosts)
           && isValidColumnsArray(data.columns)
           && isValidCardsMap(data.cards)
+          && isValidPreviousActionItemsMap(data.previousActionItems)
           && isValidRetroSettings(data.settings)
           && data.settings.revealed == false
           && isValidTimer(data.timer)
@@ -166,7 +171,7 @@ service cloud.firestore {
     }
 
     function isValidRetroUpdate(after, before) {
-      return after.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'settings', 'timer', 'createdAt'])
+      return after.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
           && after.hostId == before.hostId
           && after.createdAt == before.createdAt
           && (!('activeHostId' in after) || isValidUserId(after.activeHostId))
@@ -174,6 +179,7 @@ service cloud.firestore {
           && isValidCoHosts(after.coHosts)
           && isValidColumnsArray(after.columns)
           && isValidCardsMap(after.cards)
+          && isValidPreviousActionItemsMap(after.previousActionItems)
           && isValidRetroSettings(after.settings)
           && isValidTimer(after.timer);
     }
