@@ -7,6 +7,7 @@ import ConnectionStatus from '../components/ConnectionStatus';
 import RetroColumn from '../components/RetroColumn';
 import RetroHostControls from '../components/RetroHostControls';
 import RetroTimer from '../components/RetroTimer';
+import PreviousActionItems from '../components/PreviousActionItems';
 import './RetroPage.css';
 
 export default function RetroPage() {
@@ -15,12 +16,14 @@ export default function RetroPage() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeTab, setActiveTab] = useState('board');
 
   const {
     retroState, status, role,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
+    addActionItem, toggleActionItem, deleteActionItem,
   } = useRetro(retroId, user);
 
   const isHost = role === 'host';
@@ -145,6 +148,26 @@ export default function RetroPage() {
         </button>
       </div>
 
+      <div className="retro-tabs">
+        <button
+          className={`retro-tab ${activeTab === 'board' ? 'retro-tab--active' : ''}`}
+          onClick={() => setActiveTab('board')}
+        >
+          Retro Board
+        </button>
+        <button
+          className={`retro-tab ${activeTab === 'action-items' ? 'retro-tab--active' : ''}`}
+          onClick={() => setActiveTab('action-items')}
+        >
+          Previous Action Items
+          {retroState?.previousActionItems && Object.keys(retroState.previousActionItems).length > 0 && (
+            <span className="retro-tab__badge">
+              {Object.keys(retroState.previousActionItems).length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="retro-body">
         {/* Participants sidebar */}
         <aside className="retro-participants">
@@ -184,13 +207,21 @@ export default function RetroPage() {
           </div>
         </aside>
 
-        {/* Main columns area */}
+        {/* Main area — switches between retro board and action items */}
         <main className="retro-board">
           {!retroState ? (
             <div className="retro-loading">
               <div className="spinner" />
               <p>Connecting to retro…</p>
             </div>
+          ) : activeTab === 'action-items' ? (
+            <PreviousActionItems
+              items={retroState.previousActionItems || {}}
+              isHost={isHost}
+              onAdd={addActionItem}
+              onToggle={toggleActionItem}
+              onDelete={deleteActionItem}
+            />
           ) : (
             <div className="retro-columns">
               {activeColumns.map((col) => (

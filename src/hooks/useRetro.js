@@ -47,6 +47,7 @@ export function useRetro(retroId, user) {
           coHosts: [],
           columns: DEFAULT_COLUMN_IDS,
           cards: {},
+          previousActionItems: {},
           settings: {
             anonymous: false,
             hideCards: false,
@@ -184,6 +185,33 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
+  const addActionItem = useCallback((text) => {
+    const itemId = nanoid(12);
+    updateDoc(doc(db, 'retros', retroId), {
+      [`previousActionItems.${itemId}`]: {
+        text,
+        done: false,
+        authorId: user.id,
+        createdAt: Date.now(),
+      },
+    }).catch(console.error);
+  }, [retroId, user.id]);
+
+  const toggleActionItem = useCallback((itemId) => {
+    const current = retroStateRef.current;
+    const item = current?.previousActionItems?.[itemId];
+    if (!item) return;
+    updateDoc(doc(db, 'retros', retroId), {
+      [`previousActionItems.${itemId}.done`]: !item.done,
+    }).catch(console.error);
+  }, [retroId]);
+
+  const deleteActionItem = useCallback((itemId) => {
+    updateDoc(doc(db, 'retros', retroId), {
+      [`previousActionItems.${itemId}`]: deleteField(),
+    }).catch(console.error);
+  }, [retroId]);
+
   const startTimer = useCallback((duration) => {
     updateDoc(doc(db, 'retros', retroId), {
       timer: { duration, startedAt: Date.now(), running: true },
@@ -201,5 +229,6 @@ export function useRetro(retroId, user) {
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,
+    addActionItem, toggleActionItem, deleteActionItem,
   };
 }
