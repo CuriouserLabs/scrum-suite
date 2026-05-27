@@ -1,6 +1,6 @@
 import './ConnectionStatus.css';
 
-export default function ConnectionStatus({ status, role }) {
+export default function ConnectionStatus({ status }) {
   const labels = {
     connecting:    { text: 'Connecting…',     cls: 'status-connecting' },
     reconnecting:  { text: 'Reconnecting…',   cls: 'status-connecting' },

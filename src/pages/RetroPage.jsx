@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useRetro } from '../hooks/useRetro';
-import { ALL_COLUMNS, getColumnById } from '../utils/retroColumns';
+import { getColumnById } from '../utils/retroColumns';
 import ConnectionStatus from '../components/ConnectionStatus';
 import RetroColumn from '../components/RetroColumn';
 import RetroHostControls from '../components/RetroHostControls';
@@ -20,44 +20,44 @@ export default function RetroPage() {
     retroState, status, role,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
-    makeCoHost, handoverTo, startTimer, stopTimer,
+    startTimer, stopTimer,
   } = useRetro(retroId, user);
 
   const isHost = role === 'host';
   const activeHostId = retroState?.activeHostId || retroState?.hostId;
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   useEffect(() => {
     document.title = `Retro ${retroId} · Scrum Suite`;
     return () => { document.title = 'Scrum Suite'; };
   }, [retroId]);
 
-  const prevCountRef = useState(0);
+  const prevCountRef = useRef(0);
   useEffect(() => {
     if (!retroState) return;
     const count = retroState.participants.length;
-    if (count > prevCountRef[0]) {
+    if (count > prevCountRef.current) {
       const newcomer = retroState.participants[count - 1];
       if (newcomer && newcomer.id !== user.id) {
-        showToast(`${newcomer.displayName} joined`);
+        setTimeout(() => showToast(`${newcomer.displayName} joined`), 0);
       }
-      prevCountRef[0] = count;
+      prevCountRef.current = count;
     }
-  }, [retroState?.participants?.length]);
+  }, [retroState, user.id]);
 
   const prevRevealedRef = useRef(null);
   useEffect(() => {
     if (!retroState) return;
     const revealed = retroState.settings?.revealed;
     if (prevRevealedRef.current === false && revealed === true) {
-      showToast('Cards revealed!');
+      setTimeout(() => showToast('Cards revealed!'), 0);
     }
     prevRevealedRef.current = revealed;
-  }, [retroState?.settings?.revealed]);
-
-  function showToast(msg) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }
+  }, [retroState]);
 
   const copyLink = async () => {
     const url = `${window.location.origin}/retro/${retroId}`;

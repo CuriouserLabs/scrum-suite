@@ -15,7 +15,6 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
 
   useEffect(() => {
     if (!isRunning) {
-      setRemaining(null);
       clearInterval(intervalRef.current);
       return;
     }
@@ -37,7 +36,8 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const isExpired = remaining !== null && remaining <= 0;
+  const displayedRemaining = isRunning ? remaining : null;
+  const isExpired = displayedRemaining !== null && displayedRemaining <= 0;
 
   if (!isHost && !isRunning) return null;
 
@@ -46,7 +46,7 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
       {isRunning ? (
         <>
           <span className={`retro-timer__display ${isExpired ? 'retro-timer__display--expired' : ''}`}>
-            {isExpired ? "Time's up!" : formatTime(remaining)}
+            {isExpired ? "Time's up!" : formatTime(displayedRemaining)}
           </span>
           {isHost && (
             <button className="retro-timer__stop" onClick={onStop}>Stop</button>

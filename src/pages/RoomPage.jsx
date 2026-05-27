@@ -74,24 +74,23 @@ export default function RoomPage() {
     return () => { document.title = 'Scrum Suite'; };
   }, [roomId]);
 
-  // Toast when participant count increases
-  const prevCountRef = useState(0);
-  useEffect(() => {
-    if (!roomState) return;
-    const count = roomState.participants.length;
-    if (count > prevCountRef[0]) {
-      const newcomer = roomState.participants[count - 1];
-      if (newcomer && newcomer.id !== user.id) {
-        showToast(`${newcomer.displayName} joined`);
-      }
-      prevCountRef[0] = count;
-    }
-  }, [roomState?.participants?.length]);
-
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
+
+  const prevCountRef = useRef(0);
+  useEffect(() => {
+    if (!roomState) return;
+    const count = roomState.participants.length;
+    if (count > prevCountRef.current) {
+      const newcomer = roomState.participants[count - 1];
+      if (newcomer && newcomer.id !== user.id) {
+        setTimeout(() => showToast(`${newcomer.displayName} joined`), 0);
+      }
+      prevCountRef.current = count;
+    }
+  }, [roomState, user.id]);
 
   const copyLink = async () => {
     const url = `${window.location.origin}/room/${roomId}`;

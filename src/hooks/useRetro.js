@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+  doc, getDoc, setDoc, updateDoc, onSnapshot,
   runTransaction, serverTimestamp, arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore';
 import { nanoid } from 'nanoid';

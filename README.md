@@ -1,6 +1,6 @@
-# Sprint Poker
+# Scrum Suite
 
-Real-time sprint planning poker for agile teams. Create a room, share the link, and vote on story points simultaneously — no account required. Works on any network including corporate firewalls.
+A real-time agile toolkit for scrum teams. Run sprint planning poker sessions and retrospective boards — all in one place, no account required. Works on any network including corporate firewalls.
 
 ## Features
 
@@ -38,7 +38,7 @@ The host can promote any participant to **co-host** (★ star button in the side
 
 ## Deployment
 
-The app is hosted on Firebase Hosting at **https://vote-9f5e2.web.app**.
+The app is hosted at **https://scrumsuite.org**.
 
 To deploy a new version:
 
