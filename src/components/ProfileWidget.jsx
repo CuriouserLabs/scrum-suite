@@ -1,28 +1,10 @@
-import { useState } from 'react';
 import { useUser } from '../contexts/UserContext';
 import './ProfileWidget.css';
 
 export default function ProfileWidget() {
-  const { user, updateName, logout } = useUser();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.displayName || '');
+  const { user, logout } = useUser();
 
   if (!user) return null;
-
-  const handleSave = () => {
-    if (name.trim()) {
-      updateName(name);
-      setEditing(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') {
-      setName(user.displayName);
-      setEditing(false);
-    }
-  };
 
   const initials = user.displayName
     .split(' ')
@@ -33,23 +15,18 @@ export default function ProfileWidget() {
 
   return (
     <div className="profile-widget">
-      <div className="profile-avatar">{initials}</div>
-      {editing ? (
-        <input
-          className="profile-edit-input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
-          maxLength={30}
-          autoFocus
+      {user.photoURL ? (
+        <img
+          className="profile-avatar-img"
+          src={user.photoURL}
+          alt={user.displayName}
+          referrerPolicy="no-referrer"
         />
       ) : (
-        <span className="profile-name" onClick={() => setEditing(true)}>
-          {user.displayName}
-        </span>
+        <div className="profile-avatar">{initials}</div>
       )}
-      <button className="profile-logout" onClick={logout} title="Logout">
+      <span className="profile-name">{user.displayName}</span>
+      <button className="profile-logout" onClick={logout} title="Sign out">
         &times;
       </button>
     </div>

@@ -1,34 +1,39 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { nanoid } from 'nanoid';
-import { getStoredUser, storeUser, clearStoredUser } from '../utils/storage';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider } from '../utils/firebase';
 
 const UserContext = createContext(null);
 
 export function UserProvider({ children }) {
-  const [user, setUser] = useState(() => getStoredUser());
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback((displayName) => {
-    const newUser = { id: nanoid(), displayName: displayName.trim() };
-    storeUser(newUser);
-    setUser(newUser);
-    return newUser;
-  }, []);
-
-  const updateName = useCallback((displayName) => {
-    setUser((prev) => {
-      const updated = { ...prev, displayName: displayName.trim() };
-      storeUser(updated);
-      return updated;
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          id: firebaseUser.uid,
+          displayName: firebaseUser.displayName || 'User',
+          photoURL: firebaseUser.photoURL,
+          email: firebaseUser.email,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     });
   }, []);
 
-  const logout = useCallback(() => {
-    clearStoredUser();
-    setUser(null);
+  const login = useCallback(async () => {
+    await signInWithPopup(auth, googleProvider);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await signOut(auth);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, login, updateName, logout }}>
+    <UserContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </UserContext.Provider>
   );

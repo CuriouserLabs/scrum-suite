@@ -8,7 +8,15 @@ import RetroPage from './pages/RetroPage';
 import './App.css';
 
 function AppContent() {
-  const { user } = useUser();
+  const { user, loading } = useUser();
+
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <div className="app-loading-icon">&#9830;</div>
+      </div>
+    );
+  }
 
   if (!user) return <LoginScreen />;
 
