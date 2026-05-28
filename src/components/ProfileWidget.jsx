@@ -6,7 +6,7 @@ export default function ProfileWidget() {
 
   if (!user) return null;
 
-  const initials = user.displayName
+  const initials = (user.displayName || '?')
     .split(' ')
     .map((w) => w[0])
     .join('')

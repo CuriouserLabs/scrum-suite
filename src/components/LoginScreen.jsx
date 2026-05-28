@@ -13,7 +13,6 @@ export default function LoginScreen() {
     try {
       await login();
     } catch (err) {
-      console.error('Google sign-in error:', err.code, err.message);
       if (err.code !== 'auth/popup-closed-by-user') {
         setError('Sign-in failed. Please try again.');
       }

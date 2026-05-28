@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
-  runTransaction, serverTimestamp, arrayUnion, arrayRemove, deleteField,
+  serverTimestamp, arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { db } from '../utils/firebase';
@@ -23,27 +23,33 @@ export function useRetro(retroId, user) {
   const [retroState, setRetroState] = useState(null);
   const [status, setStatus] = useState('connecting');
   const retroStateRef = useRef(null);
+  const joinedRef = useRef(false);
 
   useEffect(() => {
     const retroRef = doc(db, 'retros', retroId);
     let unsubscribe = null;
     let left = false;
+    joinedRef.current = false;
 
     async function init() {
       const snap = await getDoc(retroRef);
 
       if (left) return;
 
-      const isStaleEmpty = snap.exists()
-        && Object.keys(snap.data().participants || {}).length === 0;
-
-      if (!snap.exists() || isStaleEmpty) {
+      if (!snap.exists()) {
         await setDoc(retroRef, {
           hostId: user.id,
           activeHostId: user.id,
+          status: 'active',
           participants: {
-            [user.id]: { displayName: user.displayName, isHost: true },
+            [user.id]: {
+              displayName: user.displayName,
+              photoURL: user.photoURL || null,
+              isHost: true,
+              online: true,
+            },
           },
+          participantIds: [user.id],
           coHosts: [],
           columns: DEFAULT_COLUMN_IDS,
           cards: {},
@@ -56,24 +62,41 @@ export function useRetro(retroId, user) {
           timer: { duration: 0, startedAt: 0, running: false },
           createdAt: serverTimestamp(),
         });
+        joinedRef.current = true;
         setRole('host');
         setStatus('ready');
       } else {
         const data = snap.data();
+
+        if (data.status === 'ended') {
+          setStatus('ended');
+          return;
+        }
+
         const activeHostId = data.activeHostId || data.hostId;
         const isActiveHost = activeHostId === user.id;
         const isCoHost = data.coHosts?.includes(user.id);
         setRole(isActiveHost || isCoHost ? 'host' : 'client');
-        setStatus('connected');
 
-        if (!data.participants?.[user.id]) {
+        if (data.participants?.[user.id]) {
+          await updateDoc(retroRef, {
+            [`participants.${user.id}.online`]: true,
+            [`participants.${user.id}.displayName`]: user.displayName,
+            [`participants.${user.id}.photoURL`]: user.photoURL || null,
+          });
+        } else {
           await updateDoc(retroRef, {
             [`participants.${user.id}`]: {
               displayName: user.displayName,
+              photoURL: user.photoURL || null,
               isHost: data.hostId === user.id,
+              online: true,
             },
+            participantIds: arrayUnion(user.id),
           });
         }
+        joinedRef.current = true;
+        setStatus('connected');
       }
 
       if (left) return;
@@ -84,6 +107,15 @@ export function useRetro(retroId, user) {
           return;
         }
         const data = snap.data();
+
+        if (data.status === 'ended') {
+          setStatus('ended');
+          const normalized = normalizeState(data);
+          retroStateRef.current = normalized;
+          setRetroState(normalized);
+          return;
+        }
+
         const activeHostId = data.activeHostId || data.hostId;
         const isActiveHost = activeHostId === user.id;
         const isCoHost = data.coHosts?.includes(user.id);
@@ -92,31 +124,27 @@ export function useRetro(retroId, user) {
         const normalized = normalizeState(data);
         retroStateRef.current = normalized;
         setRetroState(normalized);
-      }, () => {
+      }, (err) => {
+        console.error('Retro listener error:', err);
         setStatus('error');
       });
     }
 
-    init().catch(() => { if (!left) setStatus('error'); });
+    init().catch((err) => {
+      console.error('Retro init error:', err);
+      if (!left) setStatus('error');
+    });
 
     return () => {
       left = true;
       unsubscribe?.();
-      runTransaction(db, async (tx) => {
-        const snap = await tx.get(retroRef);
-        if (!snap.exists()) return;
-        const remaining = Object.keys(snap.data().participants || {})
-          .filter((id) => id !== user.id);
-        if (remaining.length === 0) {
-          tx.delete(retroRef);
-        } else {
-          tx.update(retroRef, {
-            [`participants.${user.id}`]: deleteField(),
-          });
-        }
-      }).catch(() => {});
+      if (joinedRef.current) {
+        updateDoc(retroRef, {
+          [`participants.${user.id}.online`]: false,
+        }).catch(() => {});
+      }
     };
-  }, [retroId, user.id, user.displayName]);
+  }, [retroId, user.id, user.displayName, user.photoURL]);
 
   const addCard = useCallback((columnId, text) => {
     const cardId = nanoid(12);

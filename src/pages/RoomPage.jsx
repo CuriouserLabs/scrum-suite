@@ -108,13 +108,26 @@ export default function RoomPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (status === 'disconnected') {
+  if (status === 'ended') {
     return (
       <div className="room-overlay">
         <div className="room-overlay-card">
           <div className="overlay-icon">🔒</div>
           <h2>Session Ended</h2>
-          <p>The room host has left. The session is over.</p>
+          <p>This planning session has been closed by the host.</p>
+          <button className="btn-primary" onClick={() => navigate('/')}>Back to Home</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'disconnected') {
+    return (
+      <div className="room-overlay">
+        <div className="room-overlay-card">
+          <div className="overlay-icon">🔒</div>
+          <h2>Room Not Found</h2>
+          <p>This room does not exist. The link may be invalid.</p>
           <button className="btn-primary" onClick={() => navigate('/')}>Back to Home</button>
         </div>
       </div>
@@ -300,7 +313,7 @@ export default function RoomPage() {
 }
 
 function getInitials(name) {
-  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+  return (name || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function avatarColor(id) {

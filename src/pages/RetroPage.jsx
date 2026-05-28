@@ -92,13 +92,26 @@ export default function RetroPage() {
     return Object.values(retroState.cards).filter((c) => c.authorId === userId).length;
   };
 
-  if (status === 'disconnected') {
+  if (status === 'ended') {
     return (
       <div className="retro-overlay">
         <div className="retro-overlay-card">
           <div className="retro-overlay-icon">🔒</div>
           <h2>Session Ended</h2>
-          <p>The retro host has left. The session is over.</p>
+          <p>This retrospective has been closed by the host.</p>
+          <button className="btn-primary" onClick={() => navigate('/')}>Back to Home</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'disconnected') {
+    return (
+      <div className="retro-overlay">
+        <div className="retro-overlay-card">
+          <div className="retro-overlay-icon">🔒</div>
+          <h2>Retro Not Found</h2>
+          <p>This retro does not exist. The link may be invalid.</p>
           <button className="btn-primary" onClick={() => navigate('/')}>Back to Home</button>
         </div>
       </div>
@@ -245,7 +258,7 @@ export default function RetroPage() {
 }
 
 function getInitials(name) {
-  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+  return (name || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function avatarColor(id) {

@@ -142,6 +142,129 @@
   border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
+/* ── Active sessions ── */
+.active-sessions {
+  width: 100%;
+}
+
+.active-sessions-title {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.75rem;
+}
+
+.active-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.active-session-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.active-session-card[data-mode="poker"]:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  transform: translateY(-1px);
+}
+
+.active-session-card[data-mode="retro"]:hover {
+  border-color: var(--retro-accent);
+  background: rgba(6, 182, 212, 0.08);
+  transform: translateY(-1px);
+}
+
+.active-session-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.active-session-code {
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  letter-spacing: 0.03em;
+}
+
+.active-session-host-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: rgba(245, 158, 11, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.active-session-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.active-session-story {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-session-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.active-session-participants {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.active-session-online-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.active-session-total {
+  opacity: 0.6;
+}
+
+.active-session-round {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* ── Create / Join actions ── */
 .home-actions {
   display: flex;
   align-items: stretch;

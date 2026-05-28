@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
-  runTransaction, serverTimestamp, arrayUnion, arrayRemove, deleteField,
+  serverTimestamp, arrayUnion, arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 
-// Convert Firestore participants map → array the UI expects
 function normalizeState(data) {
   if (!data) return null;
   return {
@@ -21,30 +20,34 @@ export function useRoom(roomId, user) {
   const [role, setRole] = useState(null);
   const [roomState, setRoomState] = useState(null);
   const [status, setStatus] = useState('connecting');
-  const roomStateRef = useRef(null); // stable ref for callbacks
+  const roomStateRef = useRef(null);
+  const joinedRef = useRef(false);
 
   useEffect(() => {
     const roomRef = doc(db, 'rooms', roomId);
     let unsubscribe = null;
     let left = false;
+    joinedRef.current = false;
 
     async function init() {
       const snap = await getDoc(roomRef);
 
       if (left) return;
 
-      const isStaleEmpty = snap.exists()
-        && Object.keys(snap.data().participants || {}).length === 0;
-
-      if (!snap.exists() || isStaleEmpty) {
-        // Room does not exist, or was abandoned (all participants left via
-        // browser crash — empty participants map left behind). Claim as host.
+      if (!snap.exists()) {
         await setDoc(roomRef, {
           hostId: user.id,
           activeHostId: user.id,
+          status: 'active',
           participants: {
-            [user.id]: { displayName: user.displayName, isHost: true },
+            [user.id]: {
+              displayName: user.displayName,
+              photoURL: user.photoURL || null,
+              isHost: true,
+              online: true,
+            },
           },
+          participantIds: [user.id],
           votes: {},
           revealed: false,
           round: 1,
@@ -52,41 +55,61 @@ export function useRoom(roomId, user) {
           coHosts: [],
           createdAt: serverTimestamp(),
         });
+        joinedRef.current = true;
         setRole('host');
         setStatus('ready');
       } else {
-        // Active room — join as participant (or rejoin as host/co-host)
         const data = snap.data();
+
+        if (data.status === 'ended') {
+          setStatus('ended');
+          return;
+        }
+
         const isOriginalHost = data.hostId === user.id;
         const activeHostId = data.activeHostId || data.hostId;
         const isActiveHost = activeHostId === user.id;
         const isCoHost = data.coHosts?.includes(user.id);
         setRole(isActiveHost || isCoHost ? 'host' : 'client');
-        setStatus('connected');
 
-        // Register ourselves if not already in participants
-        if (!data.participants?.[user.id]) {
+        if (data.participants?.[user.id]) {
+          await updateDoc(roomRef, {
+            [`participants.${user.id}.online`]: true,
+            [`participants.${user.id}.displayName`]: user.displayName,
+            [`participants.${user.id}.photoURL`]: user.photoURL || null,
+          });
+        } else {
           await updateDoc(roomRef, {
             [`participants.${user.id}`]: {
               displayName: user.displayName,
+              photoURL: user.photoURL || null,
               isHost: isOriginalHost,
+              online: true,
             },
+            participantIds: arrayUnion(user.id),
           });
         }
+        joinedRef.current = true;
+        setStatus('connected');
       }
 
       if (left) return;
 
-      // Real-time listener
       unsubscribe = onSnapshot(roomRef, (snap) => {
         if (!snap.exists()) {
           setStatus('disconnected');
           return;
         }
         const data = snap.data();
-        // Re-evaluate role on every snapshot.
-        // activeHostId tracks who currently holds control (falls back to
-        // hostId for rooms created before this field existed).
+
+        if (data.status === 'ended') {
+          setStatus('ended');
+          const normalized = normalizeState(data);
+          roomStateRef.current = normalized;
+          setRoomState(normalized);
+          return;
+        }
+
         const activeHostId = data.activeHostId || data.hostId;
         const isActiveHost = activeHostId === user.id;
         const isCoHost = data.coHosts?.includes(user.id);
@@ -95,33 +118,27 @@ export function useRoom(roomId, user) {
         const normalized = normalizeState(data);
         roomStateRef.current = normalized;
         setRoomState(normalized);
-      }, () => {
+      }, (err) => {
+        console.error('Room listener error:', err);
         setStatus('error');
       });
     }
 
-    init().catch(() => { if (!left) setStatus('error'); });
+    init().catch((err) => {
+      console.error('Room init error:', err);
+      if (!left) setStatus('error');
+    });
 
     return () => {
       left = true;
       unsubscribe?.();
-      // Atomically remove self; delete the whole room if we were the last one.
-      runTransaction(db, async (tx) => {
-        const snap = await tx.get(roomRef);
-        if (!snap.exists()) return;
-        const remaining = Object.keys(snap.data().participants || {})
-          .filter((id) => id !== user.id);
-        if (remaining.length === 0) {
-          tx.delete(roomRef);
-        } else {
-          tx.update(roomRef, {
-            [`participants.${user.id}`]: deleteField(),
-            [`votes.${user.id}`]: deleteField(),
-          });
-        }
-      }).catch(() => {});
+      if (joinedRef.current) {
+        updateDoc(roomRef, {
+          [`participants.${user.id}.online`]: false,
+        }).catch(() => {});
+      }
     };
-  }, [roomId, user.id, user.displayName]);
+  }, [roomId, user.id, user.displayName, user.photoURL]);
 
   const submitVote = useCallback((value) => {
     updateDoc(doc(db, 'rooms', roomId), {
@@ -154,9 +171,6 @@ export function useRoom(roomId, user) {
     }).catch(console.error);
   }, [roomId]);
 
-  // Transfer active control to another participant.
-  // The caller immediately loses host controls; the recipient gains them.
-  // The original hostId remains unchanged (purely informational).
   const handoverTo = useCallback((userId) => {
     updateDoc(doc(db, 'rooms', roomId), {
       activeHostId: userId,
