@@ -8,15 +8,12 @@ import './HomePage.css';
 
 function useActiveSessions(userId, mode) {
   const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!mode || !userId) {
-      setSessions([]);
       return;
     }
 
-    setLoading(true);
     const col = mode === 'poker' ? 'rooms' : 'retros';
     const q = query(
       collection(db, col),
@@ -41,16 +38,17 @@ function useActiveSessions(userId, mode) {
         };
       });
       setSessions(results);
-      setLoading(false);
     }, (err) => {
       console.error('Active sessions query failed:', err);
-      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      setSessions([]);
+    };
   }, [userId, mode]);
 
-  return { sessions, loading };
+  return { sessions };
 }
 
 function formatTimeAgo(date) {
@@ -71,7 +69,7 @@ export default function HomePage() {
   const [selectedMode, setSelectedMode] = useState(null);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
-  const { sessions, loading } = useActiveSessions(user.id, selectedMode);
+  const { sessions } = useActiveSessions(user.id, selectedMode);
 
   const createSession = () => {
     const id = nanoid(8);
@@ -143,7 +141,7 @@ export default function HomePage() {
             {selectedMode === 'poker' ? '♣ Sprint Poker' : '🔄 Retro Board'}
           </div>
 
-          {!loading && sessions.length > 0 && (
+          {sessions.length > 0 && (
             <div className="active-sessions">
               <h3 className="active-sessions-title">Your active sessions</h3>
               <div className="active-sessions-list">
