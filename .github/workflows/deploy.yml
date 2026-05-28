@@ -32,6 +32,3 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
           projectId: vote-9f5e2
-
-      - name: Deploy Firestore rules
-        run: npx firebase-tools@latest deploy --only firestore:rules --project vote-9f5e2 --non-interactive
