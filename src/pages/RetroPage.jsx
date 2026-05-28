@@ -7,6 +7,7 @@ import ConnectionStatus from '../components/ConnectionStatus';
 import RetroColumn from '../components/RetroColumn';
 import RetroHostControls from '../components/RetroHostControls';
 import RetroTimer from '../components/RetroTimer';
+import PreviousActionItems from '../components/PreviousActionItems';
 import './RetroPage.css';
 
 export default function RetroPage() {
@@ -21,6 +22,7 @@ export default function RetroPage() {
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
+    addActionItem, toggleActionItem, deleteActionItem,
   } = useRetro(retroId, user);
 
   const isHost = role === 'host';
@@ -118,7 +120,9 @@ export default function RetroPage() {
 
   const activeColumns = (retroState?.columns || [])
     .map(getColumnById)
-    .filter(Boolean);
+    .filter((col) => col && col.id !== 'previous-actions');
+
+  const showPreviousActionItems = retroState?.columns?.includes('previous-actions');
 
   return (
     <div className="retro-page">
@@ -209,6 +213,15 @@ export default function RetroPage() {
                   onToggleVote={toggleVote}
                 />
               ))}
+              {showPreviousActionItems && (
+                <PreviousActionItems
+                  items={retroState.previousActionItems || {}}
+                  isHost={isHost}
+                  onAdd={addActionItem}
+                  onToggle={toggleActionItem}
+                  onDelete={deleteActionItem}
+                />
+              )}
             </div>
           )}
         </main>

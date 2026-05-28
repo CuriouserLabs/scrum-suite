@@ -1,0 +1,71 @@
+.pai-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.pai-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.pai-item--done .pai-item__text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.pai-item__check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #14b8a6;
+  transition: border-color 0.15s, background 0.15s;
+  margin-top: 1px;
+}
+
+.pai-item__check:hover {
+  border-color: #14b8a6;
+}
+
+.pai-item__text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.pai-item__delete {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.pai-item:hover .pai-item__delete {
+  opacity: 1;
+}
+
+.pai-item__delete:hover {
+  color: #f43f5e;
+}
