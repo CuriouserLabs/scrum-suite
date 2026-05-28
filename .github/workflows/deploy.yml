@@ -21,6 +21,11 @@ jobs:
 
       - run: npm run build
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -29,6 +34,4 @@ jobs:
           projectId: vote-9f5e2
 
       - name: Deploy Firestore rules
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools@latest deploy --only firestore:rules --project vote-9f5e2 --non-interactive
+        run: npx firebase-tools@latest deploy --only firestore:rules --project vote-9f5e2 --non-interactive
