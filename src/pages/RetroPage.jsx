@@ -19,6 +19,7 @@ export default function RetroPage() {
 
   const {
     retroState, status, role,
+    endSession,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
@@ -248,6 +249,7 @@ export default function RetroPage() {
             updateColumns={updateColumns}
             updateSettings={updateSettings}
             revealCards={revealCards}
+            endSession={endSession}
           />
         ) : (
           <p className="retro-guest-note">Add your thoughts to the columns above</p>
