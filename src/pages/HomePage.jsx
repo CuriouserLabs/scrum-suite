@@ -1,8 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 import { useUser } from '../contexts/UserContext';
 import './HomePage.css';
+
+function useActiveSessions(userId, mode) {
+  const [sessions, setSessions] = useState([]);
+
+  useEffect(() => {
+    if (!mode || !userId) {
+      return;
+    }
+
+    const col = mode === 'poker' ? 'rooms' : 'retros';
+    const q = query(
+      collection(db, col),
+      where('participantIds', 'array-contains', userId),
+      where('status', '==', 'active'),
+    );
+
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const results = snap.docs.map((doc) => {
+        const data = doc.data();
+        const participants = Object.entries(data.participants || {});
+        const onlineCount = participants.filter(([, p]) => p.online).length;
+        return {
+          id: doc.id,
+          hostName: participants.find(([, p]) => p.isHost)?.[1]?.displayName || 'Unknown',
+          totalParticipants: participants.length,
+          onlineCount,
+          createdAt: data.createdAt?.toDate?.() || null,
+          isHost: data.hostId === userId,
+          storyTitle: data.storyTitle,
+          round: data.round,
+        };
+      });
+      setSessions(results);
+    }, (err) => {
+      console.error('Active sessions query failed:', err);
+    });
+
+    return () => {
+      unsubscribe();
+      setSessions([]);
+    };
+  }, [userId, mode]);
+
+  return { sessions };
+}
+
+function formatTimeAgo(date) {
+  if (!date) return '';
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function HomePage() {
   const { user } = useUser();
@@ -10,6 +69,7 @@ export default function HomePage() {
   const [selectedMode, setSelectedMode] = useState(null);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
+  const { sessions } = useActiveSessions(user.id, selectedMode);
 
   const createSession = () => {
     const id = nanoid(8);
@@ -34,6 +94,11 @@ export default function HomePage() {
     }
 
     const path = selectedMode === 'poker' ? `/room/${input}` : `/retro/${input}`;
+    navigate(path);
+  };
+
+  const rejoinSession = (sessionId) => {
+    const path = selectedMode === 'poker' ? `/room/${sessionId}` : `/retro/${sessionId}`;
     navigate(path);
   };
 
@@ -76,6 +141,41 @@ export default function HomePage() {
             {selectedMode === 'poker' ? '♣ Sprint Poker' : '🔄 Retro Board'}
           </div>
 
+          {sessions.length > 0 && (
+            <div className="active-sessions">
+              <h3 className="active-sessions-title">Your active sessions</h3>
+              <div className="active-sessions-list">
+                {sessions.map((s) => (
+                  <button
+                    key={s.id}
+                    className="active-session-card"
+                    data-mode={selectedMode}
+                    onClick={() => rejoinSession(s.id)}
+                  >
+                    <div className="active-session-top">
+                      <span className="active-session-code">{s.id}</span>
+                      {s.isHost && <span className="active-session-host-badge">host</span>}
+                      <span className="active-session-time">{formatTimeAgo(s.createdAt)}</span>
+                    </div>
+                    {selectedMode === 'poker' && s.storyTitle && (
+                      <div className="active-session-story">{s.storyTitle}</div>
+                    )}
+                    <div className="active-session-bottom">
+                      <span className="active-session-participants">
+                        <span className="active-session-online-dot" />
+                        {s.onlineCount} online
+                        <span className="active-session-total"> / {s.totalParticipants} total</span>
+                      </span>
+                      {selectedMode === 'poker' && s.round > 1 && (
+                        <span className="active-session-round">Round {s.round}</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="home-actions">
             <div className="action-card create-card">
               <div className="action-icon">{selectedMode === 'poker' ? '♣' : '🔄'}</div>
@@ -117,7 +217,7 @@ export default function HomePage() {
       )}
 
       <div className="home-footer-tip">
-        Signed in as <strong>{user.displayName}</strong> · Not you? Click your name in the header to change it.
+        Signed in as <strong>{user.displayName}</strong>
       </div>
     </div>
   );

@@ -1,28 +1,42 @@
 rules_version = '2';
 
 // ===============================================================
-// Assumed Data Model
+// Data Model
 // ===============================================================
 //
-// Collection: rooms
-// Document ID: 8-character alphanumeric room code (e.g. "a1b2c3d4")
-// Fields:
-//   - hostId:       string (required, immutable) — nanoid user ID of creator
-//   - activeHostId: string (required, mutable)  — who currently holds primary control;
-//                   starts equal to hostId; updated via handover action
-//   - participants: map (required) — keyed by userId
-//       { displayName: string(1–50), isHost: bool }
-//   - votes:        map (required) — keyed by userId, value is number or "?"
-//   - revealed:     bool (required)
-//   - round:        number int >= 1 (required)
-//   - storyTitle:   string 0–200 chars (required)
-//   - coHosts:      list of userId strings, max 50 (required)
-//   - createdAt:    timestamp (required, immutable)
+// All operations require Firebase Authentication.
 //
-// Note: This app uses client-generated nanoid user IDs stored in
-// localStorage rather than Firebase Auth. Rules therefore cannot
-// enforce per-user identity but DO enforce strict data shape and
-// size limits to prevent corruption and DoS.
+// Collection: rooms
+// Document ID: 8-character alphanumeric room code
+// Fields:
+//   - hostId:         string (required, immutable) — Firebase UID of creator
+//   - activeHostId:   string (required, mutable)   — who currently holds primary control
+//   - status:         string (required) — 'active' or 'ended'
+//   - participants:   map (required) — keyed by userId
+//       { displayName: string(1–50), photoURL: string|null, isHost: bool, online: bool }
+//   - participantIds: list of userId strings (required) — for querying user's sessions
+//   - votes:          map (required) — keyed by userId, value is number or "?"
+//   - revealed:       bool (required)
+//   - round:          number int >= 1 (required)
+//   - storyTitle:     string 0–200 chars (required)
+//   - coHosts:        list of userId strings, max 50 (required)
+//   - createdAt:      timestamp (required, immutable)
+//
+// Collection: retros
+// Document ID: 8-character alphanumeric retro code
+// Fields:
+//   - hostId:                string (required, immutable)
+//   - activeHostId:          string (required, mutable)
+//   - status:                string (required) — 'active' or 'ended'
+//   - participants:          map (required)
+//   - participantIds:        list (required)
+//   - coHosts:               list (required)
+//   - columns:               list (required)
+//   - cards:                 map (required)
+//   - previousActionItems:   map (required)
+//   - settings:              map (required) { anonymous, hideCards, revealed }
+//   - timer:                 map (required) { duration, startedAt, running }
+//   - createdAt:             timestamp (required, immutable)
 // ===============================================================
 
 service cloud.firestore {
@@ -31,6 +45,10 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
 
     function isValidRoomId(roomId) {
       return roomId.size() == 8;
@@ -60,14 +78,29 @@ service cloud.firestore {
       return c is list && c.size() <= 100;
     }
 
-    // Full document validator used on create
+    function isValidParticipantIds(p) {
+      return p is list && p.size() <= 100;
+    }
+
+    function isValidStatus(s) {
+      return s is string && (s == 'active' || s == 'ended');
+    }
+
+    // ===============================================================
+    // rooms/{roomId}
+    // ===============================================================
+
     function isValidRoomCreate(data) {
-      return data.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
-          && data.keys().hasAll(['hostId', 'activeHostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
+      return data.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
+          && data.keys().hasAll(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
           && isValidUserId(data.hostId)
           && isValidUserId(data.activeHostId)
-          && data.activeHostId == data.hostId  // must start as the creator
+          && data.activeHostId == data.hostId
+          && data.hostId == request.auth.uid
+          && isValidStatus(data.status)
+          && data.status == 'active'
           && isValidParticipantsMap(data.participants)
+          && isValidParticipantIds(data.participantIds)
           && isValidVotesMap(data.votes)
           && data.revealed is bool
           && data.revealed == false
@@ -79,17 +112,14 @@ service cloud.firestore {
           && data.createdAt is timestamp;
     }
 
-    // Post-update full document validator used on update
     function isValidRoomUpdate(after, before) {
-      // Only known fields allowed in the resulting document
-      return after.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
-          // Immutable fields must not change
+      return after.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'votes', 'revealed', 'round', 'storyTitle', 'coHosts', 'createdAt'])
           && after.hostId == before.hostId
           && after.createdAt == before.createdAt
-          // activeHostId must be a valid user ID when present
           && (!('activeHostId' in after) || isValidUserId(after.activeHostId))
-          // Type and size validation
+          && isValidStatus(after.status)
           && isValidParticipantsMap(after.participants)
+          && isValidParticipantIds(after.participantIds)
           && isValidVotesMap(after.votes)
           && after.revealed is bool
           && after.round is int
@@ -100,27 +130,19 @@ service cloud.firestore {
           && isValidCoHosts(after.coHosts);
     }
 
-    // ===============================================================
-    // rooms/{roomId}
-    // ===============================================================
     match /rooms/{roomId} {
-      // Anyone who knows the room code can read it.
-      // Room codes are 8-char secrets shared only with the team.
-      allow read: if isValidRoomId(roomId);
+      allow get: if isAuthenticated()
+                 && isValidRoomId(roomId);
 
-      // Create: only if room ID is 8 chars and data is well-formed.
-      // The creating client sets themselves as host.
-      allow create: if isValidRoomId(roomId)
+      allow list: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+                    && isValidRoomId(roomId)
                     && isValidRoomCreate(request.resource.data);
 
-      // Update: data shape must remain valid; immutable fields protected.
-      allow update: if isValidRoomId(roomId)
+      allow update: if isAuthenticated()
+                    && isValidRoomId(roomId)
                     && isValidRoomUpdate(request.resource.data, resource.data);
-
-      // Allow client-initiated delete so the last participant can clean up.
-      // Guarded by the room-ID format check; the actual "last person out"
-      // logic is enforced in the app via a transaction.
-      allow delete: if isValidRoomId(roomId);
     }
 
     // ===============================================================
@@ -154,12 +176,16 @@ service cloud.firestore {
     }
 
     function isValidRetroCreate(data) {
-      return data.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
-          && data.keys().hasAll(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+      return data.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+          && data.keys().hasAll(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
           && isValidUserId(data.hostId)
           && isValidUserId(data.activeHostId)
           && data.activeHostId == data.hostId
+          && data.hostId == request.auth.uid
+          && isValidStatus(data.status)
+          && data.status == 'active'
           && isValidParticipantsMap(data.participants)
+          && isValidParticipantIds(data.participantIds)
           && isValidCoHosts(data.coHosts)
           && isValidColumnsArray(data.columns)
           && isValidCardsMap(data.cards)
@@ -171,11 +197,13 @@ service cloud.firestore {
     }
 
     function isValidRetroUpdate(after, before) {
-      return after.keys().hasOnly(['hostId', 'activeHostId', 'participants', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+      return after.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
           && after.hostId == before.hostId
           && after.createdAt == before.createdAt
           && (!('activeHostId' in after) || isValidUserId(after.activeHostId))
+          && isValidStatus(after.status)
           && isValidParticipantsMap(after.participants)
+          && isValidParticipantIds(after.participantIds)
           && isValidCoHosts(after.coHosts)
           && isValidColumnsArray(after.columns)
           && isValidCardsMap(after.cards)
@@ -185,15 +213,18 @@ service cloud.firestore {
     }
 
     match /retros/{retroId} {
-      allow read: if isValidRoomId(retroId);
+      allow get: if isAuthenticated()
+                 && isValidRoomId(retroId);
 
-      allow create: if isValidRoomId(retroId)
+      allow list: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+                    && isValidRoomId(retroId)
                     && isValidRetroCreate(request.resource.data);
 
-      allow update: if isValidRoomId(retroId)
+      allow update: if isAuthenticated()
+                    && isValidRoomId(retroId)
                     && isValidRetroUpdate(request.resource.data, resource.data);
-
-      allow delete: if isValidRoomId(retroId);
     }
   }
 }
