@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 import { useUser } from '../contexts/UserContext';
 import './HomePage.css';
@@ -22,13 +22,12 @@ function useActiveSessions(userId, mode) {
     );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      const results = snap.docs.map((doc) => {
-        const data = doc.data();
+      const results = snap.docs.map((d) => {
+        const data = d.data();
         const participants = Object.entries(data.participants || {});
         const onlineCount = participants.filter(([, p]) => p.online).length;
         return {
-          id: doc.id,
-          hostName: participants.find(([, p]) => p.isHost)?.[1]?.displayName || 'Unknown',
+          id: d.id,
           totalParticipants: participants.length,
           onlineCount,
           createdAt: data.createdAt?.toDate?.() || null,
@@ -69,6 +68,8 @@ export default function HomePage() {
   const [selectedMode, setSelectedMode] = useState(null);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
+  const [confirmingEndId, setConfirmingEndId] = useState(null);
+  const confirmEndTimerRef = useRef(null);
   const { sessions } = useActiveSessions(user.id, selectedMode);
 
   const createSession = () => {
@@ -102,7 +103,23 @@ export default function HomePage() {
     navigate(path);
   };
 
+  const handleEndSession = (e, sessionId) => {
+    e.stopPropagation();
+    if (confirmingEndId !== sessionId) {
+      clearTimeout(confirmEndTimerRef.current);
+      setConfirmingEndId(sessionId);
+      confirmEndTimerRef.current = setTimeout(() => setConfirmingEndId(null), 3000);
+    } else {
+      clearTimeout(confirmEndTimerRef.current);
+      setConfirmingEndId(null);
+      const col = selectedMode === 'poker' ? 'rooms' : 'retros';
+      updateDoc(doc(db, col, sessionId), { status: 'ended' }).catch(console.error);
+    }
+  };
+
   const resetMode = () => {
+    clearTimeout(confirmEndTimerRef.current);
+    setConfirmingEndId(null);
     setSelectedMode(null);
     setJoinCode('');
     setJoinError('');
@@ -156,6 +173,14 @@ export default function HomePage() {
                       <span className="active-session-code">{s.id}</span>
                       {s.isHost && <span className="active-session-host-badge">host</span>}
                       <span className="active-session-time">{formatTimeAgo(s.createdAt)}</span>
+                      {s.isHost && (
+                        <button
+                          className={`active-session-end-btn ${confirmingEndId === s.id ? 'confirming' : ''}`}
+                          onClick={(e) => handleEndSession(e, s.id)}
+                        >
+                          {confirmingEndId === s.id ? 'Tap again to end' : 'End'}
+                        </button>
+                      )}
                     </div>
                     {selectedMode === 'poker' && s.storyTitle && (
                       <div className="active-session-story">{s.storyTitle}</div>

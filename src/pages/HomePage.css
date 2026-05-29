@@ -256,6 +256,32 @@
   opacity: 0.6;
 }
 
+.active-session-end-btn {
+  margin-left: auto;
+  padding: 0.15rem 0.55rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.active-session-end-btn:hover {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.active-session-end-btn.confirming {
+  color: #fff;
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
 .active-session-round {
   font-size: 0.7rem;
   color: var(--text-muted);
