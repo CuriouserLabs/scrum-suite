@@ -149,6 +149,11 @@ export function useRetro(retroId, user) {
 
   const isEnded = () => retroStateRef.current?.status === 'ended';
 
+  const updateTitle = useCallback((title) => {
+    if (isEnded()) return;
+    updateDoc(doc(db, 'retros', retroId), { title }).catch(console.error);
+  }, [retroId]);
+
   const endSession = useCallback(() => {
     updateDoc(doc(db, 'retros', retroId), {
       status: 'ended',
@@ -278,7 +283,7 @@ export function useRetro(retroId, user) {
 
   return {
     retroState, status, role,
-    endSession,
+    endSession, updateTitle,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,

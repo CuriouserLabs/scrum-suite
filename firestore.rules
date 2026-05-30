@@ -175,8 +175,12 @@ service cloud.firestore {
           && t.running is bool;
     }
 
+    function isValidRetroTitle(data) {
+      return !('title' in data) || (data.title is string && data.title.size() <= 100);
+    }
+
     function isValidRetroCreate(data) {
-      return data.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+      return data.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt', 'title'])
           && data.keys().hasAll(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
           && isValidUserId(data.hostId)
           && isValidUserId(data.activeHostId)
@@ -193,11 +197,12 @@ service cloud.firestore {
           && isValidRetroSettings(data.settings)
           && data.settings.revealed == false
           && isValidTimer(data.timer)
+          && isValidRetroTitle(data)
           && data.createdAt is timestamp;
     }
 
     function isValidRetroUpdate(after, before) {
-      return after.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt'])
+      return after.keys().hasOnly(['hostId', 'activeHostId', 'status', 'participants', 'participantIds', 'coHosts', 'columns', 'cards', 'previousActionItems', 'settings', 'timer', 'createdAt', 'title'])
           && after.hostId == before.hostId
           && after.createdAt == before.createdAt
           && (!('activeHostId' in after) || isValidUserId(after.activeHostId))
@@ -209,7 +214,8 @@ service cloud.firestore {
           && isValidCardsMap(after.cards)
           && isValidPreviousActionItemsMap(after.previousActionItems)
           && isValidRetroSettings(after.settings)
-          && isValidTimer(after.timer);
+          && isValidTimer(after.timer)
+          && isValidRetroTitle(after);
     }
 
     match /retros/{retroId} {
