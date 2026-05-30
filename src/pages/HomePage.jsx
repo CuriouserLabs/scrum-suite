@@ -31,7 +31,7 @@ function useActiveSessions(userId, mode) {
           totalParticipants: participants.length,
           onlineCount,
           createdAt: data.createdAt?.toDate?.() || null,
-          isHost: data.hostId === userId,
+          isHost: data.hostId === userId || data.activeHostId === userId,
           storyTitle: data.storyTitle,
           round: data.round,
         };

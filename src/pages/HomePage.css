@@ -257,7 +257,6 @@
 }
 
 .active-session-end-btn {
-  margin-left: auto;
   padding: 0.3rem 0.75rem;
   background: transparent;
   color: var(--text-muted);
