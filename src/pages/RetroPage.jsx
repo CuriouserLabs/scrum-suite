@@ -21,15 +21,36 @@ export default function RetroPage() {
 
   const {
     retroState, status, role,
-    endSession,
+    endSession, updateTitle,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
     addActionItem, toggleActionItem, deleteActionItem,
+    fetchPreviousRetros, importActionItems,
   } = useRetro(retroId, user);
 
   const isHost = role === 'host';
   const activeHostId = retroState?.activeHostId || retroState?.hostId;
+
+  const [localTitle, setLocalTitle] = useState('');
+  const titleSourceRef = useRef('remote');
+  const titleDebounceRef = useRef(null);
+
+  useEffect(() => {
+    if (titleSourceRef.current === 'local') return;
+    setLocalTitle(retroState?.title || '');
+  }, [retroState?.title]);
+
+  const handleTitleChange = (val) => {
+    const clamped = val.slice(0, 100);
+    titleSourceRef.current = 'local';
+    setLocalTitle(clamped);
+    clearTimeout(titleDebounceRef.current);
+    titleDebounceRef.current = setTimeout(() => {
+      updateTitle(clamped);
+      titleSourceRef.current = 'remote';
+    }, 400);
+  };
 
   function showToast(msg) {
     setToast(msg);
@@ -37,9 +58,10 @@ export default function RetroPage() {
   }
 
   useEffect(() => {
-    document.title = `Retro ${retroId} · Scrum Suite`;
+    const suffix = retroState?.title ? ` — ${retroState.title}` : '';
+    document.title = `Retro ${retroId}${suffix} · Scrum Suite`;
     return () => { document.title = 'Scrum Suite'; };
-  }, [retroId]);
+  }, [retroId, retroState?.title]);
 
   const prevCountRef = useRef(0);
   useEffect(() => {
@@ -164,6 +186,18 @@ export default function RetroPage() {
             <span className="retro-code">{retroId}</span>
           </div>
           <ConnectionStatus status={status} role={role} />
+          {isHost ? (
+            <input
+              className="retro-title-input"
+              type="text"
+              placeholder="Add a title…"
+              value={localTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              maxLength={100}
+            />
+          ) : (
+            localTitle && <span className="retro-title-display">{localTitle}</span>
+          )}
         </div>
         <RetroTimer
           timer={retroState?.timer}
@@ -257,6 +291,8 @@ export default function RetroPage() {
                   onAdd={addActionItem}
                   onToggle={toggleActionItem}
                   onDelete={deleteActionItem}
+                  onFetchPreviousRetros={fetchPreviousRetros}
+                  onImportActionItems={importActionItems}
                 />
               )}
             </div>

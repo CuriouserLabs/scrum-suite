@@ -69,3 +69,153 @@
 .pai-item__delete:hover {
   color: #f43f5e;
 }
+
+/* ── Import action items ── */
+.pai-import-wrapper {
+  position: relative;
+  padding: 0 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.pai-import-btn {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px dashed rgba(20, 184, 166, 0.3);
+  border-radius: 8px;
+  color: #14b8a6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pai-import-btn:hover {
+  background: rgba(20, 184, 166, 0.14);
+  border-color: rgba(20, 184, 166, 0.5);
+}
+
+.pai-import-btn--active {
+  background: rgba(20, 184, 166, 0.14);
+  border-style: solid;
+  border-color: rgba(20, 184, 166, 0.5);
+}
+
+.pai-import-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0.5rem;
+  right: 0.5rem;
+  background: var(--bg-card, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  overflow: hidden;
+  animation: paiDropIn 0.15s ease;
+}
+
+@keyframes paiDropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pai-import-hint {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pai-import-loading,
+.pai-import-empty {
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.pai-import-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.pai-import-session {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+}
+
+.pai-import-session:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.pai-import-session:disabled {
+  cursor: default;
+}
+
+.pai-import-session.imported {
+  background: rgba(20, 184, 166, 0.08);
+  border-color: rgba(20, 184, 166, 0.2);
+}
+
+.pai-import-session__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pai-import-session__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pai-import-session__date {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.pai-import-session__meta {
+  flex-shrink: 0;
+}
+
+.pai-import-session__count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #14b8a6;
+  background: rgba(20, 184, 166, 0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.pai-import-session__done {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.pai-import-session__spinner {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

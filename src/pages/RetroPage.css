@@ -63,6 +63,49 @@
   letter-spacing: -0.5px;
 }
 
+/* ── Retro title ── */
+.retro-title-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.3rem 0.6rem;
+  margin-left: 0.5rem;
+  min-width: 0;
+  width: clamp(120px, 20vw, 280px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.retro-title-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.retro-title-input:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.retro-title-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.retro-title-display {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-light);
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: clamp(120px, 20vw, 280px);
+}
+
 /* Reuse the back-btn and copy-btn patterns from RoomPage */
 .retro-header .back-btn {
   background: none;
@@ -374,6 +417,14 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .retro-title-input,
+  .retro-title-display {
+    width: clamp(80px, 15vw, 180px);
+    max-width: clamp(80px, 15vw, 180px);
+  }
+}
+
 @media (max-width: 640px) {
   .retro-participants {
     width: 60px;
@@ -392,5 +443,9 @@
   .retro-column {
     min-width: 85vw;
     scroll-snap-align: start;
+  }
+  .retro-title-input,
+  .retro-title-display {
+    display: none;
   }
 }
