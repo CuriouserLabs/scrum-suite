@@ -71,3 +71,56 @@
   font-size: 0.875rem;
   margin: 1rem 0 0;
 }
+
+/* Dev-only sign-in */
+.dev-sign-in {
+  margin-top: 1.5rem;
+}
+
+.dev-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dev-divider::before,
+.dev-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.dev-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dev-account-btn {
+  padding: 0.6rem 1rem;
+  background: var(--surface-hover, #2a2a3e);
+  color: var(--text-light, #e0e0e0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dev-account-btn:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.dev-account-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

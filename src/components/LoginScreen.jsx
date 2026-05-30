@@ -2,8 +2,16 @@ import { useState } from 'react';
 import { useUser } from '../contexts/UserContext';
 import './LoginScreen.css';
 
+const isDev = import.meta.env.DEV;
+
+const DEV_TEST_ACCOUNTS = [
+  { label: 'Test Host', email: 'testhost@scrumsuite.dev', password: 'testpass123' },
+  { label: 'Test User 1', email: 'testuser1@scrumsuite.dev', password: 'testpass123' },
+  { label: 'Test User 2', email: 'testuser2@scrumsuite.dev', password: 'testpass123' },
+];
+
 export default function LoginScreen() {
-  const { login } = useUser();
+  const { login, loginWithEmail } = useUser();
   const [error, setError] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
 
@@ -16,6 +24,18 @@ export default function LoginScreen() {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError('Sign-in failed. Please try again.');
       }
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  const handleDevSignIn = async (account) => {
+    setError(null);
+    setSigningIn(true);
+    try {
+      await loginWithEmail(account.email, account.password);
+    } catch (err) {
+      setError(`Dev sign-in failed: ${err.message}`);
     } finally {
       setSigningIn(false);
     }
@@ -41,6 +61,26 @@ export default function LoginScreen() {
           {signingIn ? 'Signing in…' : 'Sign in with Google'}
         </button>
         {error && <p className="login-error">{error}</p>}
+
+        {isDev && (
+          <div className="dev-sign-in">
+            <div className="dev-divider">
+              <span>Dev Sign In</span>
+            </div>
+            <div className="dev-accounts">
+              {DEV_TEST_ACCOUNTS.map((account) => (
+                <button
+                  key={account.email}
+                  className="dev-account-btn"
+                  onClick={() => handleDevSignIn(account)}
+                  disabled={signingIn}
+                >
+                  {account.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
