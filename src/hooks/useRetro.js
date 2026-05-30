@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
+  collection, query, where, getDocs,
   serverTimestamp, arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
@@ -281,6 +282,53 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
+  const fetchPreviousRetros = useCallback(async () => {
+    const q = query(
+      collection(db, 'retros'),
+      where('participantIds', 'array-contains', user.id),
+    );
+    const snap = await getDocs(q);
+    return snap.docs
+      .filter((d) => d.id !== retroId)
+      .map((d) => {
+        const data = d.data();
+        const actionItems = data.previousActionItems || {};
+        const pending = Object.values(actionItems).filter((i) => !i.done);
+        return {
+          id: d.id,
+          title: data.title || '',
+          status: data.status,
+          createdAt: data.createdAt?.toDate?.() || new Date(0),
+          actionItemCount: Object.keys(actionItems).length,
+          pendingCount: pending.length,
+        };
+      })
+      .filter((r) => r.actionItemCount > 0)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 3);
+  }, [user.id, retroId]);
+
+  const importActionItems = useCallback(async (sourceRetroId) => {
+    if (isEnded()) return 0;
+    const snap = await getDoc(doc(db, 'retros', sourceRetroId));
+    if (!snap.exists()) return 0;
+    const items = snap.data().previousActionItems || {};
+    const pending = Object.entries(items).filter(([, i]) => !i.done);
+    if (pending.length === 0) return 0;
+    const updates = {};
+    for (const [, item] of pending) {
+      const newId = nanoid(12);
+      updates[`previousActionItems.${newId}`] = {
+        text: item.text,
+        done: false,
+        authorId: user.id,
+        createdAt: Date.now(),
+      };
+    }
+    await updateDoc(doc(db, 'retros', retroId), updates);
+    return pending.length;
+  }, [retroId, user.id]);
+
   return {
     retroState, status, role,
     endSession, updateTitle,
@@ -288,5 +336,6 @@ export function useRetro(retroId, user) {
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,
     addActionItem, toggleActionItem, deleteActionItem,
+    fetchPreviousRetros, importActionItems,
   };
 }

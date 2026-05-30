@@ -26,6 +26,7 @@ export default function RetroPage() {
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
     addActionItem, toggleActionItem, deleteActionItem,
+    fetchPreviousRetros, importActionItems,
   } = useRetro(retroId, user);
 
   const isHost = role === 'host';
@@ -290,6 +291,8 @@ export default function RetroPage() {
                   onAdd={addActionItem}
                   onToggle={toggleActionItem}
                   onDelete={deleteActionItem}
+                  onFetchPreviousRetros={fetchPreviousRetros}
+                  onImportActionItems={importActionItems}
                 />
               )}
             </div>
