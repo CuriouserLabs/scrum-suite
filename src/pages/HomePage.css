@@ -258,15 +258,16 @@
 
 .active-session-end-btn {
   margin-left: auto;
-  padding: 0.15rem 0.55rem;
+  padding: 0.3rem 0.75rem;
   background: transparent;
   color: var(--text-muted);
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
+  align-self: center;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
   white-space: nowrap;
 }

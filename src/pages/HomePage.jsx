@@ -163,11 +163,14 @@ export default function HomePage() {
               <h3 className="active-sessions-title">Your active sessions</h3>
               <div className="active-sessions-list">
                 {sessions.map((s) => (
-                  <button
+                  <div
                     key={s.id}
                     className="active-session-card"
                     data-mode={selectedMode}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => rejoinSession(s.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') rejoinSession(s.id); }}
                   >
                     <div className="active-session-top">
                       <span className="active-session-code">{s.id}</span>
@@ -195,7 +198,7 @@ export default function HomePage() {
                         <span className="active-session-round">Round {s.round}</span>
                       )}
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
