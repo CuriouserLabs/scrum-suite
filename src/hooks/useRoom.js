@@ -132,7 +132,8 @@ export function useRoom(roomId, user) {
     return () => {
       left = true;
       unsubscribe?.();
-      if (joinedRef.current) {
+      // Don't mark offline if the session was ended — it's frozen.
+      if (joinedRef.current && roomStateRef.current?.status !== 'ended') {
         updateDoc(roomRef, {
           [`participants.${user.id}.online`]: false,
         }).catch(() => {});
@@ -140,17 +141,26 @@ export function useRoom(roomId, user) {
     };
   }, [roomId, user.id, user.displayName, user.photoURL]);
 
+  const isEnded = () => roomStateRef.current?.status === 'ended';
+
+  const endSession = useCallback(() => {
+    updateDoc(doc(db, 'rooms', roomId), { status: 'ended' }).catch(console.error);
+  }, [roomId]);
+
   const submitVote = useCallback((value) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), {
       [`votes.${user.id}`]: value,
     }).catch(console.error);
   }, [roomId, user.id]);
 
   const revealVotes = useCallback(() => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), { revealed: true }).catch(console.error);
   }, [roomId]);
 
   const resetRound = useCallback(() => {
+    if (isEnded()) return;
     const current = roomStateRef.current;
     updateDoc(doc(db, 'rooms', roomId), {
       votes: {},
@@ -160,10 +170,12 @@ export function useRoom(roomId, user) {
   }, [roomId]);
 
   const setStoryTitle = useCallback((title) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), { storyTitle: title }).catch(console.error);
   }, [roomId]);
 
   const makeCoHost = useCallback((userId) => {
+    if (isEnded()) return;
     const current = roomStateRef.current;
     const alreadyCoHost = current?.coHosts?.includes(userId);
     updateDoc(doc(db, 'rooms', roomId), {
@@ -172,10 +184,11 @@ export function useRoom(roomId, user) {
   }, [roomId]);
 
   const handoverTo = useCallback((userId) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), {
       activeHostId: userId,
     }).catch(console.error);
   }, [roomId]);
 
-  return { roomState, status, role, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost, handoverTo };
+  return { roomState, status, role, endSession, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost, handoverTo };
 }

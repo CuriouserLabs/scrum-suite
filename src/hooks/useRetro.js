@@ -138,7 +138,8 @@ export function useRetro(retroId, user) {
     return () => {
       left = true;
       unsubscribe?.();
-      if (joinedRef.current) {
+      // Don't mark offline if the session was ended — it's frozen.
+      if (joinedRef.current && retroStateRef.current?.status !== 'ended') {
         updateDoc(retroRef, {
           [`participants.${user.id}.online`]: false,
         }).catch(() => {});
@@ -146,7 +147,17 @@ export function useRetro(retroId, user) {
     };
   }, [retroId, user.id, user.displayName, user.photoURL]);
 
+  const isEnded = () => retroStateRef.current?.status === 'ended';
+
+  const endSession = useCallback(() => {
+    updateDoc(doc(db, 'retros', retroId), {
+      status: 'ended',
+      timer: { duration: 0, startedAt: 0, running: false },
+    }).catch(console.error);
+  }, [retroId]);
+
   const addCard = useCallback((columnId, text) => {
+    if (isEnded()) return;
     const cardId = nanoid(12);
     updateDoc(doc(db, 'retros', retroId), {
       [`cards.${cardId}`]: {
@@ -160,18 +171,21 @@ export function useRetro(retroId, user) {
   }, [retroId, user.id]);
 
   const deleteCard = useCallback((cardId) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`cards.${cardId}`]: deleteField(),
     }).catch(console.error);
   }, [retroId]);
 
   const editCard = useCallback((cardId, newText) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`cards.${cardId}.text`]: newText,
     }).catch(console.error);
   }, [retroId]);
 
   const toggleVote = useCallback((cardId) => {
+    if (isEnded()) return;
     const current = retroStateRef.current;
     const card = current?.cards?.[cardId];
     if (!card) return;
@@ -182,10 +196,12 @@ export function useRetro(retroId, user) {
   }, [retroId, user.id]);
 
   const updateColumns = useCallback((columnIds) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), { columns: columnIds }).catch(console.error);
   }, [retroId]);
 
   const updateSettings = useCallback((partial) => {
+    if (isEnded()) return;
     const updates = {};
     for (const [key, val] of Object.entries(partial)) {
       updates[`settings.${key}`] = val;
@@ -194,12 +210,14 @@ export function useRetro(retroId, user) {
   }, [retroId]);
 
   const revealCards = useCallback(() => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       'settings.revealed': true,
     }).catch(console.error);
   }, [retroId]);
 
   const makeCoHost = useCallback((userId) => {
+    if (isEnded()) return;
     const current = retroStateRef.current;
     const alreadyCoHost = current?.coHosts?.includes(userId);
     updateDoc(doc(db, 'retros', retroId), {
@@ -208,12 +226,14 @@ export function useRetro(retroId, user) {
   }, [retroId]);
 
   const handoverTo = useCallback((userId) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       activeHostId: userId,
     }).catch(console.error);
   }, [retroId]);
 
   const addActionItem = useCallback((text) => {
+    if (isEnded()) return;
     const itemId = nanoid(12);
     updateDoc(doc(db, 'retros', retroId), {
       [`previousActionItems.${itemId}`]: {
@@ -226,6 +246,7 @@ export function useRetro(retroId, user) {
   }, [retroId, user.id]);
 
   const toggleActionItem = useCallback((itemId) => {
+    if (isEnded()) return;
     const current = retroStateRef.current;
     const item = current?.previousActionItems?.[itemId];
     if (!item) return;
@@ -235,18 +256,21 @@ export function useRetro(retroId, user) {
   }, [retroId]);
 
   const deleteActionItem = useCallback((itemId) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`previousActionItems.${itemId}`]: deleteField(),
     }).catch(console.error);
   }, [retroId]);
 
   const startTimer = useCallback((duration) => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       timer: { duration, startedAt: Date.now(), running: true },
     }).catch(console.error);
   }, [retroId]);
 
   const stopTimer = useCallback(() => {
+    if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       timer: { duration: 0, startedAt: 0, running: false },
     }).catch(console.error);
@@ -254,6 +278,7 @@ export function useRetro(retroId, user) {
 
   return {
     retroState, status, role,
+    endSession,
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,
