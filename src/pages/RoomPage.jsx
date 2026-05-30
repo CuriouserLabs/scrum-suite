@@ -13,6 +13,8 @@ export default function RoomPage() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const confirmEndTimerRef = useRef(null);
   const deckHeightRef = useRef(210);
   const [deckHeight, setDeckHeight] = useState(210);
 
@@ -40,7 +42,7 @@ export default function RoomPage() {
     document.addEventListener('mouseup', onUp);
   }, []);
 
-  const { roomState, status, role, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost, handoverTo } =
+  const { roomState, status, role, endSession, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost, handoverTo } =
     useRoom(roomId, user);
 
   const isHost = role === 'host';
@@ -91,6 +93,17 @@ export default function RoomPage() {
       prevCountRef.current = count;
     }
   }, [roomState, user.id]);
+
+  const handleEndSession = () => {
+    if (!confirmingEnd) {
+      setConfirmingEnd(true);
+      confirmEndTimerRef.current = setTimeout(() => setConfirmingEnd(false), 3000);
+    } else {
+      clearTimeout(confirmEndTimerRef.current);
+      setConfirmingEnd(false);
+      endSession();
+    }
+  };
 
   const copyLink = async () => {
     const url = `${window.location.origin}/room/${roomId}`;
@@ -162,9 +175,19 @@ export default function RoomPage() {
           </div>
           <ConnectionStatus status={status} role={role} />
         </div>
-        <button className="copy-btn" onClick={copyLink}>
-          {copied ? '✓ Copied!' : '🔗 Copy Link'}
-        </button>
+        <div className="room-header-actions">
+          <button className="copy-btn" onClick={copyLink}>
+            {copied ? '✓ Copied!' : '🔗 Copy Link'}
+          </button>
+          {isHost && (
+            <button
+              className={`btn-end-session ${confirmingEnd ? 'confirming' : ''}`}
+              onClick={handleEndSession}
+            >
+              {confirmingEnd ? 'Tap again to end' : 'End Session'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="room-body">

@@ -105,6 +105,7 @@ export default function RetroHostControls({
           Reveal All
         </button>
       )}
+
     </div>
   );
 }

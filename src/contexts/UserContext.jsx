@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 
 const UserContext = createContext(null);
@@ -28,12 +28,16 @@ export function UserProvider({ children }) {
     await signInWithPopup(auth, googleProvider);
   }, []);
 
+  const loginWithEmail = useCallback(async (email, password) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut(auth);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout }}>
+    <UserContext.Provider value={{ user, loading, login, loginWithEmail, logout }}>
       {children}
     </UserContext.Provider>
   );

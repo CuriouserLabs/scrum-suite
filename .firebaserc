@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "vote-9f5e2"
+    "production": "vote-9f5e2",
+    "dev": "scrum-suite-dev",
+    "default": "scrum-suite-dev"
   }
 }
