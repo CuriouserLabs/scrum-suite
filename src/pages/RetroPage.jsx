@@ -16,6 +16,8 @@ export default function RetroPage() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const confirmEndTimerRef = useRef(null);
 
   const {
     retroState, status, role,
@@ -61,6 +63,17 @@ export default function RetroPage() {
     }
     prevRevealedRef.current = revealed;
   }, [retroState]);
+
+  const handleEndSession = () => {
+    if (!confirmingEnd) {
+      setConfirmingEnd(true);
+      confirmEndTimerRef.current = setTimeout(() => setConfirmingEnd(false), 3000);
+    } else {
+      clearTimeout(confirmEndTimerRef.current);
+      setConfirmingEnd(false);
+      endSession();
+    }
+  };
 
   const copyLink = async () => {
     const url = `${window.location.origin}/retro/${retroId}`;
@@ -158,9 +171,19 @@ export default function RetroPage() {
           onStart={startTimer}
           onStop={stopTimer}
         />
-        <button className="copy-btn" onClick={copyLink}>
-          {copied ? '✓ Copied!' : '🔗 Copy Link'}
-        </button>
+        <div className="retro-header-actions">
+          <button className="copy-btn" onClick={copyLink}>
+            {copied ? '✓ Copied!' : '🔗 Copy Link'}
+          </button>
+          {isHost && (
+            <button
+              className={`btn-end-session ${confirmingEnd ? 'confirming' : ''}`}
+              onClick={handleEndSession}
+            >
+              {confirmingEnd ? 'Tap again to end' : 'End Session'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="retro-body">
@@ -249,7 +272,6 @@ export default function RetroPage() {
             updateColumns={updateColumns}
             updateSettings={updateSettings}
             revealCards={revealCards}
-            endSession={endSession}
           />
         ) : (
           <p className="retro-guest-note">Add your thoughts to the columns above</p>

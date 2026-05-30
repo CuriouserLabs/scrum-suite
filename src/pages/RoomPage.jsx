@@ -175,9 +175,19 @@ export default function RoomPage() {
           </div>
           <ConnectionStatus status={status} role={role} />
         </div>
-        <button className="copy-btn" onClick={copyLink}>
-          {copied ? '✓ Copied!' : '🔗 Copy Link'}
-        </button>
+        <div className="room-header-actions">
+          <button className="copy-btn" onClick={copyLink}>
+            {copied ? '✓ Copied!' : '🔗 Copy Link'}
+          </button>
+          {isHost && (
+            <button
+              className={`btn-end-session ${confirmingEnd ? 'confirming' : ''}`}
+              onClick={handleEndSession}
+            >
+              {confirmingEnd ? 'Tap again to end' : 'End Session'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="room-body">
@@ -309,12 +319,6 @@ export default function RoomPage() {
             </button>
             <button className="btn-reset" onClick={resetRound} disabled={!roomState}>
               New Round
-            </button>
-            <button
-              className={`btn-end-session ${confirmingEnd ? 'confirming' : ''}`}
-              onClick={handleEndSession}
-            >
-              {confirmingEnd ? 'Tap again to end' : 'End Session'}
             </button>
           </>
         ) : (

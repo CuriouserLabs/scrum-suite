@@ -219,7 +219,6 @@
 .active-session-time {
   color: var(--text-muted);
   font-size: 0.75rem;
-  margin-left: auto;
 }
 
 .active-session-story {
@@ -257,23 +256,27 @@
 }
 
 .active-session-end-btn {
-  padding: 0.3rem 0.75rem;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.35rem 0.85rem;
+  background: rgba(239, 68, 68, 0.10);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
+  margin-left: auto;
   align-self: center;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.1s;
   white-space: nowrap;
 }
 
 .active-session-end-btn:hover {
-  color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.20);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
 }
 
 .active-session-end-btn.confirming {

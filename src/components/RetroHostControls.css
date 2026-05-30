@@ -147,33 +147,6 @@
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
-/* ── End session button ── */
-.retro-controls__end-btn {
-  padding: 0.4rem 1rem;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-left: auto;
-  flex-shrink: 0;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
-  white-space: nowrap;
-}
-
-.retro-controls__end-btn:hover {
-  color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-.retro-controls__end-btn.confirming {
-  color: #fff;
-  background: var(--danger);
-  border-color: var(--danger);
-}
-
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .retro-controls {

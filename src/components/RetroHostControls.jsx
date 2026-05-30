@@ -1,16 +1,12 @@
-import { useState, useRef } from 'react';
 import { ALL_COLUMNS } from '../utils/retroColumns';
 import './RetroHostControls.css';
 
 export default function RetroHostControls({
-  retroState, updateColumns, updateSettings, revealCards, endSession,
+  retroState, updateColumns, updateSettings, revealCards,
 }) {
   const settings = retroState?.settings || {};
   const activeColumnIds = retroState?.columns || [];
   const inactiveColumns = ALL_COLUMNS.filter((c) => !activeColumnIds.includes(c.id));
-
-  const [confirmingEnd, setConfirmingEnd] = useState(false);
-  const confirmEndTimerRef = useRef(null);
 
   const removeColumn = (id) => {
     updateColumns(activeColumnIds.filter((cid) => cid !== id));
@@ -37,17 +33,6 @@ export default function RetroHostControls({
 
   const handleReveal = () => {
     revealCards();
-  };
-
-  const handleEndSession = () => {
-    if (!confirmingEnd) {
-      setConfirmingEnd(true);
-      confirmEndTimerRef.current = setTimeout(() => setConfirmingEnd(false), 3000);
-    } else {
-      clearTimeout(confirmEndTimerRef.current);
-      setConfirmingEnd(false);
-      endSession();
-    }
   };
 
   const canReveal = settings.hideCards && !settings.revealed;
@@ -121,13 +106,6 @@ export default function RetroHostControls({
         </button>
       )}
 
-      {/* End session button */}
-      <button
-        className={`retro-controls__end-btn ${confirmingEnd ? 'confirming' : ''}`}
-        onClick={handleEndSession}
-      >
-        {confirmingEnd ? 'Tap again to end' : 'End Session'}
-      </button>
     </div>
   );
 }
