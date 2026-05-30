@@ -509,6 +509,31 @@
 
 .btn-reset:disabled { opacity: 0.35; cursor: not-allowed; }
 
+.btn-end-session {
+  padding: 0.6rem 1.25rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-end-session:hover {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-end-session.confirming {
+  color: #fff;
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
 .guest-footer-note {
   color: var(--text-muted);
   font-size: 0.875rem;
