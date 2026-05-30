@@ -35,3 +35,8 @@ skills-lock.json
 .env
 .env.*
 !.env.example
+!.env.development
+!.env.production
+
+# Firebase service account keys
+*-firebase-adminsdk-*.json

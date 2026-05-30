@@ -6,8 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build --mode production",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:dev": "firebase use dev && npm run build:dev && firebase deploy",
+    "deploy:prod": "firebase use production && npm run build:prod && firebase deploy",
+    "deploy:rules:dev": "firebase use dev && firebase deploy --only firestore:rules",
+    "deploy:rules:prod": "firebase use production && firebase deploy --only firestore:rules",
+    "deploy:indexes:dev": "firebase use dev && firebase deploy --only firestore:indexes",
+    "deploy:indexes:prod": "firebase use production && firebase deploy --only firestore:indexes"
   },
   "dependencies": {
     "firebase": "^12.13.0",
