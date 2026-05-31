@@ -226,6 +226,13 @@
   border-color: rgba(99, 102, 241, 0.18);
 }
 
+.retro-participant-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+}
+
 .retro-participant-avatar {
   width: 30px;
   height: 30px;
@@ -236,7 +243,24 @@
   font-size: 0.65rem;
   font-weight: 700;
   color: #fff;
-  flex-shrink: 0;
+}
+
+.retro-participant .presence-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #0f172a;
+}
+
+.retro-participant .presence-dot.online {
+  background: #22c55e;
+}
+
+.retro-participant .presence-dot.offline {
+  background: rgba(148, 163, 184, 0.35);
 }
 
 .retro-participant-meta {

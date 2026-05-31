@@ -202,8 +202,11 @@ export default function RoomPage() {
               const pIsActiveHost = p.id === activeHostId;
               return (
                 <div key={p.id} className={`participant-item ${isMe ? 'self' : ''} ${voted ? 'has-voted' : ''}`}>
-                  <div className="participant-avatar" style={{ background: avatarColor(p.id) }}>
-                    {getInitials(p.displayName)}
+                  <div className="participant-avatar-wrap">
+                    <div className="participant-avatar" style={{ background: avatarColor(p.id) }}>
+                      {getInitials(p.displayName)}
+                    </div>
+                    <span className={`presence-dot ${p.online ? 'online' : 'offline'}`} title={p.online ? 'Online' : 'Offline'} />
                   </div>
                   <div className="participant-meta">
                     <span className="participant-name">
