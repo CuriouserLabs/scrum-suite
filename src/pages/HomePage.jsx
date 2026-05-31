@@ -143,7 +143,7 @@ export default function HomePage() {
           </button>
 
           <button className="mode-card mode-retro" onClick={() => setSelectedMode('retro')}>
-            <div className="mode-icon">&#128260;</div>
+            <div className="mode-icon">&#8635;</div>
             <h2>Retro Board</h2>
             <p>Reflect on your sprint — what went well, what to improve.</p>
           </button>
@@ -155,7 +155,7 @@ export default function HomePage() {
           </button>
 
           <div className="session-mode-badge" data-mode={selectedMode}>
-            {selectedMode === 'poker' ? '♣ Sprint Poker' : '🔄 Retro Board'}
+            {selectedMode === 'poker' ? '♣ Sprint Poker' : '↻ Retro Board'}
           </div>
 
           {sessions.length > 0 && (
@@ -206,7 +206,7 @@ export default function HomePage() {
 
           <div className="home-actions">
             <div className="action-card create-card">
-              <div className="action-icon">{selectedMode === 'poker' ? '♣' : '🔄'}</div>
+              <div className="action-icon">{selectedMode === 'poker' ? '♣' : '↻'}</div>
               <h2>{selectedMode === 'poker' ? 'Create a Room' : 'Create a Retro'}</h2>
               <p>
                 {selectedMode === 'poker'
