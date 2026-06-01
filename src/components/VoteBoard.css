@@ -160,6 +160,12 @@
   gap: 3px;
 }
 
+.dist-count {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .dist-bar-wrap {
   display: flex;
   align-items: flex-end;
