@@ -232,8 +232,11 @@ export default function RetroPage() {
               const cardCount = getCardCountForUser(p.id);
               return (
                 <div key={p.id} className={`retro-participant ${isMe ? 'self' : ''}`}>
-                  <div className="retro-participant-avatar" style={{ background: avatarColor(p.id) }}>
-                    {getInitials(p.displayName)}
+                  <div className="retro-participant-avatar-wrap">
+                    <div className="retro-participant-avatar" style={{ background: avatarColor(p.id) }}>
+                      {getInitials(p.displayName)}
+                    </div>
+                    <span className={`presence-dot ${p.online ? 'online' : 'offline'}`} title={p.online ? 'Online' : 'Offline'} />
                   </div>
                   <div className="retro-participant-meta">
                     <span className="retro-participant-name">
