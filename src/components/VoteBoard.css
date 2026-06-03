@@ -5,10 +5,10 @@
   width: 100%;
 }
 
-/* Header row: label + avg */
+/* Header row: label + avg/chart section */
 .vote-board-header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
 }
@@ -19,6 +19,13 @@
   text-transform: uppercase;
   letter-spacing: 0.09em;
   font-weight: 700;
+}
+
+.vb-avg-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .vb-avg {

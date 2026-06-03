@@ -58,31 +58,29 @@ export default function VoteBoard({ roomState, userId }) {
         )}
 
         {revealed && avg !== null && (
-          <span className="vb-avg">
-            avg <strong>{avg}</strong>
-          </span>
+          <div className="vb-avg-section">
+            <span className="vb-avg">avg <strong>{avg}</strong></span>
+            {Object.keys(dist).length > 1 && (
+              <div className="vb-distribution">
+                {Object.entries(dist)
+                  .sort(([a], [b]) => Number(a) - Number(b))
+                  .map(([val, count]) => (
+                    <div key={val} className="dist-col">
+                      <span className="dist-count">{count}</span>
+                      <div className="dist-bar-wrap">
+                        <div
+                          className="dist-bar"
+                          style={{ height: `${(count / maxCount) * 40 + 8}px` }}
+                        />
+                      </div>
+                      <span className="dist-label">{val}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Distribution bar chart — directly under the average, shown after reveal with differing votes */}
-      {revealed && Object.keys(dist).length > 1 && (
-        <div className="vb-distribution">
-          {Object.entries(dist)
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([val, count]) => (
-              <div key={val} className="dist-col">
-                <span className="dist-count">{count}</span>
-                <div className="dist-bar-wrap">
-                  <div
-                    className="dist-bar"
-                    style={{ height: `${(count / maxCount) * 40 + 8}px` }}
-                  />
-                </div>
-                <span className="dist-label">{val}</span>
-              </div>
-            ))}
-        </div>
-      )}
 
       <div className="vote-cards-row">
         {participants.map((p, i) => {
