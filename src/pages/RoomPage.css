@@ -187,10 +187,10 @@
 
 .participant-item .presence-dot {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 8px;
-  height: 8px;
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   border: 2px solid #0f172a;
 }
