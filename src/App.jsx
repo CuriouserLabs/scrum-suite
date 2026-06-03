@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { UserProvider, useUser } from './contexts/UserContext';
-import LoginScreen from './components/LoginScreen';
+import LandingPage from './pages/LandingPage';
 import ProfileWidget from './components/ProfileWidget';
 import HomePage from './pages/HomePage';
 import RoomPage from './pages/RoomPage';
@@ -18,7 +18,7 @@ function AppContent() {
     );
   }
 
-  if (!user) return <LoginScreen />;
+  if (!user) return <LandingPage />;
 
   return (
     <div className="app-shell">
