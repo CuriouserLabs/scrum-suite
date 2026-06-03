@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /room/
+Disallow: /retro/
+
+Sitemap: https://scrumsuite.org/sitemap.xml
