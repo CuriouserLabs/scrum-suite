@@ -130,7 +130,7 @@ export default function HomePage() {
       <div className="home-hero">
         <h1>Plan smarter,<br />ship faster.</h1>
         <p className="home-tagline">
-          Real-time collaboration for agile teams — no logins, no setup, just paste a link.
+          Real-time collaboration for agile teams — sign in with Google, share a link, and go.
         </p>
       </div>
 
