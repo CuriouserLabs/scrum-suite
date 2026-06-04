@@ -1,14 +1,30 @@
 import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
+import type { CardWithId } from '../types';
 import './RetroCard.css';
+
+interface RetroCardProps {
+  card: CardWithId;
+  cardId: string;
+  columnColor: string;
+  userId: string;
+  isHost: boolean;
+  anonymous: boolean;
+  hideCards: boolean;
+  revealed: boolean;
+  onDelete: (cardId: string) => void;
+  onEdit: (cardId: string, newText: string) => void;
+  onToggleVote: (cardId: string) => void;
+}
 
 export default function RetroCard({
   card, cardId, columnColor, userId, isHost,
   anonymous, hideCards, revealed,
   onDelete, onEdit, onToggleVote,
-}) {
+}: RetroCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(card.text);
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isAuthor = card.authorId === userId;
   const hasVoted = card.votes?.includes(userId);
@@ -30,7 +46,7 @@ export default function RetroCard({
     setEditing(false);
   };
 
-  const handleEditKeyDown = (e) => {
+  const handleEditKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleEditSubmit();

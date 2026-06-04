@@ -1,7 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
+import type { RoomState } from '../types';
 import './VoteBoard.css';
 
-export default function VoteBoard({ roomState, userId }) {
+interface VoteBoardProps {
+  roomState: RoomState;
+  userId: string;
+}
+
+export default function VoteBoard({ roomState, userId }: VoteBoardProps) {
   const { participants, votes, revealed, round } = roomState;
   const [flipped, setFlipped] = useState(revealed);
   const prevRoundRef = useRef(round);
@@ -36,7 +42,7 @@ export default function VoteBoard({ roomState, userId }) {
     numericVotes.length > 0 && numericVotes.every((v) => v === numericVotes[0]);
 
   // Distribution for bar chart (only shown after reveal)
-  const dist = {};
+  const dist: Record<string, number> = {};
   participants.forEach((p) => {
     const v = votes[p.id];
     if (v !== undefined) dist[v] = (dist[v] || 0) + 1;

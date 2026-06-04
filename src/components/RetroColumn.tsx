@@ -1,16 +1,32 @@
 import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import RetroCard from './RetroCard';
+import type { Column, CardWithId } from '../types';
 import './RetroColumn.css';
+
+interface RetroColumnProps {
+  column: Column;
+  cards: CardWithId[];
+  userId: string;
+  isHost: boolean;
+  anonymous: boolean;
+  hideCards: boolean;
+  revealed: boolean;
+  onAddCard: (columnId: string, text: string) => void;
+  onDeleteCard: (cardId: string) => void;
+  onEditCard: (cardId: string, newText: string) => void;
+  onToggleVote: (cardId: string) => void;
+}
 
 export default function RetroColumn({
   column, cards, userId, isHost,
   anonymous, hideCards, revealed,
   onAddCard, onDeleteCard, onEditCard, onToggleVote,
-}) {
+}: RetroColumnProps) {
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (adding && textareaRef.current) {
@@ -28,7 +44,7 @@ export default function RetroColumn({
     setAdding(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { Timer } from '../types';
 import './RetroTimer.css';
 
 const PRESETS = [
@@ -7,9 +8,16 @@ const PRESETS = [
   { label: '10m', seconds: 600 },
 ];
 
-export default function RetroTimer({ timer, isHost, onStart, onStop }) {
-  const [remaining, setRemaining] = useState(null);
-  const intervalRef = useRef(null);
+interface RetroTimerProps {
+  timer: Timer | undefined;
+  isHost: boolean;
+  onStart: (seconds: number) => void;
+  onStop: () => void;
+}
+
+export default function RetroTimer({ timer, isHost, onStart, onStop }: RetroTimerProps) {
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const isRunning = timer?.running && timer?.startedAt && timer?.duration;
 
@@ -20,8 +28,8 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
     }
 
     const tick = () => {
-      const elapsed = (Date.now() - timer.startedAt) / 1000;
-      const left = Math.max(0, timer.duration - elapsed);
+      const elapsed = (Date.now() - (timer?.startedAt ?? 0)) / 1000;
+      const left = Math.max(0, (timer?.duration ?? 0) - elapsed);
       setRemaining(left);
     };
 
@@ -30,7 +38,7 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
     return () => clearInterval(intervalRef.current);
   }, [isRunning, timer?.startedAt, timer?.duration]);
 
-  const formatTime = (secs) => {
+  const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
@@ -46,7 +54,7 @@ export default function RetroTimer({ timer, isHost, onStart, onStop }) {
       {isRunning ? (
         <>
           <span className={`retro-timer__display ${isExpired ? 'retro-timer__display--expired' : ''}`}>
-            {isExpired ? "Time's up!" : formatTime(displayedRemaining)}
+            {isExpired ? "Time's up!" : formatTime(displayedRemaining ?? 0)}
           </span>
           {isHost && (
             <button className="retro-timer__stop" onClick={onStop}>Stop</button>

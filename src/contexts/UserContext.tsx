@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
+import type { User, UserContextValue } from '../types';
 
-const UserContext = createContext(null);
+const UserContext = createContext<UserContextValue | null>(null);
 
-export function UserProvider({ children }) {
-  const [user, setUser] = useState(null);
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function UserProvider({ children }) {
     await signInWithPopup(auth, googleProvider);
   }, []);
 
-  const loginWithEmail = useCallback(async (email, password) => {
+  const loginWithEmail = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
@@ -48,4 +50,13 @@ export function useUser() {
   const ctx = useContext(UserContext);
   if (!ctx) throw new Error('useUser must be used within UserProvider');
   return ctx;
+}
+
+// For components rendered only on authenticated routes (guarded by AppContent),
+// where `user` is guaranteed to be present.
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuthUser(): User {
+  const { user } = useUser();
+  if (!user) throw new Error('useAuthUser must be used within an authenticated route');
+  return user;
 }
