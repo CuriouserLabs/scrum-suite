@@ -4,13 +4,26 @@ import './LandingPage.css';
 
 const isDev = import.meta.env.DEV;
 
-const DEV_TEST_ACCOUNTS = [
+interface DevAccount {
+  label: string;
+  email: string;
+  password: string;
+}
+
+const DEV_TEST_ACCOUNTS: DevAccount[] = [
   { label: 'Test Host', email: 'testhost@scrumsuite.dev', password: 'testpass123' },
   { label: 'Test User 1', email: 'testuser1@scrumsuite.dev', password: 'testpass123' },
   { label: 'Test User 2', email: 'testuser2@scrumsuite.dev', password: 'testpass123' },
 ];
 
-function GoogleSignInButton({ onClick, signingIn, label = 'Sign in with Google', className = '' }) {
+interface GoogleSignInButtonProps {
+  onClick: () => void;
+  signingIn: boolean;
+  label?: string;
+  className?: string;
+}
+
+function GoogleSignInButton({ onClick, signingIn, label = 'Sign in with Google', className = '' }: GoogleSignInButtonProps) {
   return (
     <button className={`google-sign-in-btn ${className}`} onClick={onClick} disabled={signingIn}>
       <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -26,7 +39,7 @@ function GoogleSignInButton({ onClick, signingIn, label = 'Sign in with Google',
 
 export default function LandingPage() {
   const { login, loginWithEmail } = useUser();
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -35,7 +48,7 @@ export default function LandingPage() {
     try {
       await login();
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
+      if ((err as { code?: string }).code !== 'auth/popup-closed-by-user') {
         setError('Sign-in failed. Please try again.');
       }
     } finally {
@@ -43,13 +56,13 @@ export default function LandingPage() {
     }
   };
 
-  const handleDevSignIn = async (account) => {
+  const handleDevSignIn = async (account: DevAccount) => {
     setError(null);
     setSigningIn(true);
     try {
       await loginWithEmail(account.email, account.password);
     } catch (err) {
-      setError(`Dev sign-in failed: ${err.message}`);
+      setError(`Dev sign-in failed: ${(err as Error).message}`);
     } finally {
       setSigningIn(false);
     }

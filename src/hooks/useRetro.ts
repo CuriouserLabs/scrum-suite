@@ -7,8 +7,12 @@ import {
 import { nanoid } from 'nanoid';
 import { db } from '../utils/firebase';
 import { DEFAULT_COLUMN_IDS } from '../utils/retroColumns';
+import type {
+  User, Role, ConnectionState, RetroDoc, RetroState, RetroSettings,
+  ActionItem, PreviousRetroSummary, UseRetroResult,
+} from '../types';
 
-function normalizeState(data) {
+function normalizeState(data: RetroDoc | undefined): RetroState | null {
   if (!data) return null;
   return {
     ...data,
@@ -19,16 +23,16 @@ function normalizeState(data) {
   };
 }
 
-export function useRetro(retroId, user) {
-  const [role, setRole] = useState(null);
-  const [retroState, setRetroState] = useState(null);
-  const [status, setStatus] = useState('connecting');
-  const retroStateRef = useRef(null);
+export function useRetro(retroId: string, user: User): UseRetroResult {
+  const [role, setRole] = useState<Role | null>(null);
+  const [retroState, setRetroState] = useState<RetroState | null>(null);
+  const [status, setStatus] = useState<ConnectionState>('connecting');
+  const retroStateRef = useRef<RetroState | null>(null);
   const joinedRef = useRef(false);
 
   useEffect(() => {
     const retroRef = doc(db, 'retros', retroId);
-    let unsubscribe = null;
+    let unsubscribe: (() => void) | null = null;
     let left = false;
     joinedRef.current = false;
 
@@ -67,7 +71,7 @@ export function useRetro(retroId, user) {
         setRole('host');
         setStatus('ready');
       } else {
-        const data = snap.data();
+        const data = snap.data() as RetroDoc;
 
         if (data.status === 'ended') {
           setStatus('ended');
@@ -107,7 +111,7 @@ export function useRetro(retroId, user) {
           setStatus('disconnected');
           return;
         }
-        const data = snap.data();
+        const data = snap.data() as RetroDoc;
 
         if (data.status === 'ended') {
           setStatus('ended');
@@ -150,7 +154,7 @@ export function useRetro(retroId, user) {
 
   const isEnded = () => retroStateRef.current?.status === 'ended';
 
-  const updateTitle = useCallback((title) => {
+  const updateTitle = useCallback((title: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), { title }).catch(console.error);
   }, [retroId]);
@@ -162,7 +166,7 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
-  const addCard = useCallback((columnId, text) => {
+  const addCard = useCallback((columnId: string, text: string) => {
     if (isEnded()) return;
     const cardId = nanoid(12);
     updateDoc(doc(db, 'retros', retroId), {
@@ -176,21 +180,21 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId, user.id]);
 
-  const deleteCard = useCallback((cardId) => {
+  const deleteCard = useCallback((cardId: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`cards.${cardId}`]: deleteField(),
     }).catch(console.error);
   }, [retroId]);
 
-  const editCard = useCallback((cardId, newText) => {
+  const editCard = useCallback((cardId: string, newText: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`cards.${cardId}.text`]: newText,
     }).catch(console.error);
   }, [retroId]);
 
-  const toggleVote = useCallback((cardId) => {
+  const toggleVote = useCallback((cardId: string) => {
     if (isEnded()) return;
     const current = retroStateRef.current;
     const card = current?.cards?.[cardId];
@@ -201,14 +205,14 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId, user.id]);
 
-  const updateColumns = useCallback((columnIds) => {
+  const updateColumns = useCallback((columnIds: string[]) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), { columns: columnIds }).catch(console.error);
   }, [retroId]);
 
-  const updateSettings = useCallback((partial) => {
+  const updateSettings = useCallback((partial: Partial<RetroSettings>) => {
     if (isEnded()) return;
-    const updates = {};
+    const updates: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(partial)) {
       updates[`settings.${key}`] = val;
     }
@@ -222,7 +226,7 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
-  const makeCoHost = useCallback((userId) => {
+  const makeCoHost = useCallback((userId: string) => {
     if (isEnded()) return;
     const current = retroStateRef.current;
     const alreadyCoHost = current?.coHosts?.includes(userId);
@@ -231,14 +235,14 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
-  const handoverTo = useCallback((userId) => {
+  const handoverTo = useCallback((userId: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       activeHostId: userId,
     }).catch(console.error);
   }, [retroId]);
 
-  const addActionItem = useCallback((text) => {
+  const addActionItem = useCallback((text: string) => {
     if (isEnded()) return;
     const itemId = nanoid(12);
     updateDoc(doc(db, 'retros', retroId), {
@@ -251,7 +255,7 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId, user.id]);
 
-  const toggleActionItem = useCallback((itemId) => {
+  const toggleActionItem = useCallback((itemId: string) => {
     if (isEnded()) return;
     const current = retroStateRef.current;
     const item = current?.previousActionItems?.[itemId];
@@ -261,14 +265,14 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
-  const deleteActionItem = useCallback((itemId) => {
+  const deleteActionItem = useCallback((itemId: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       [`previousActionItems.${itemId}`]: deleteField(),
     }).catch(console.error);
   }, [retroId]);
 
-  const startTimer = useCallback((duration) => {
+  const startTimer = useCallback((duration: number) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
       timer: { duration, startedAt: Date.now(), running: true },
@@ -282,7 +286,7 @@ export function useRetro(retroId, user) {
     }).catch(console.error);
   }, [retroId]);
 
-  const fetchPreviousRetros = useCallback(async () => {
+  const fetchPreviousRetros = useCallback(async (): Promise<PreviousRetroSummary[]> => {
     const q = query(
       collection(db, 'retros'),
       where('participantIds', 'array-contains', user.id),
@@ -291,7 +295,7 @@ export function useRetro(retroId, user) {
     return snap.docs
       .filter((d) => d.id !== retroId)
       .map((d) => {
-        const data = d.data();
+        const data = d.data() as RetroDoc;
         const actionItems = data.previousActionItems || {};
         const pending = Object.values(actionItems).filter((i) => !i.done);
         return {
@@ -304,18 +308,18 @@ export function useRetro(retroId, user) {
         };
       })
       .filter((r) => r.actionItemCount > 0)
-      .sort((a, b) => b.createdAt - a.createdAt)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 3);
   }, [user.id, retroId]);
 
-  const importActionItems = useCallback(async (sourceRetroId) => {
+  const importActionItems = useCallback(async (sourceRetroId: string): Promise<number> => {
     if (isEnded()) return 0;
     const snap = await getDoc(doc(db, 'retros', sourceRetroId));
     if (!snap.exists()) return 0;
-    const items = snap.data().previousActionItems || {};
+    const items = (snap.data() as RetroDoc).previousActionItems || {};
     const pending = Object.entries(items).filter(([, i]) => !i.done);
     if (pending.length === 0) return 0;
-    const updates = {};
+    const updates: Record<string, ActionItem> = {};
     for (const [, item] of pending) {
       const newId = nanoid(12);
       updates[`previousActionItems.${newId}`] = {

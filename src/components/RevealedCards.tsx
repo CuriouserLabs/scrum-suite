@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
+import type { RoomState } from '../types';
 import './RevealedCards.css';
 
-export default function RevealedCards({ roomState }) {
+interface RevealedCardsProps {
+  roomState: RoomState;
+}
+
+export default function RevealedCards({ roomState }: RevealedCardsProps) {
   const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
@@ -25,7 +30,7 @@ export default function RevealedCards({ roomState }) {
   const consensus = numericVotes.length > 0 && numericVotes.every((v) => v === numericVotes[0]);
 
   // Vote distribution
-  const dist = {};
+  const dist: Record<string, number> = {};
   participants.forEach((p) => {
     const v = votes[p.id];
     if (v !== undefined) dist[v] = (dist[v] || 0) + 1;

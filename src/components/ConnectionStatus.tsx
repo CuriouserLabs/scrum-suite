@@ -1,7 +1,13 @@
+import type { ConnectionState, Role } from '../types';
 import './ConnectionStatus.css';
 
-export default function ConnectionStatus({ status }) {
-  const labels = {
+interface ConnectionStatusProps {
+  status: ConnectionState;
+  role?: Role | null;
+}
+
+export default function ConnectionStatus({ status }: ConnectionStatusProps) {
+  const labels: Record<string, { text: string; cls: string }> = {
     connecting:    { text: 'Connecting…',     cls: 'status-connecting' },
     reconnecting:  { text: 'Reconnecting…',   cls: 'status-connecting' },
     ready:         { text: 'Hosting',          cls: 'status-ready' },
