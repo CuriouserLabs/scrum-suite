@@ -32,6 +32,8 @@ export interface User {
   displayName: string;
   photoURL: string | null;
   email: string | null;
+  /** True for anonymous guest users (joined a session by name only). */
+  isGuest: boolean;
 }
 
 // ===============================================================
@@ -44,6 +46,8 @@ export interface ParticipantData {
   photoURL: string | null;
   isHost: boolean;
   online: boolean;
+  /** True when this participant joined as an anonymous guest. */
+  isGuest: boolean;
 }
 
 /** A participant after `normalizeState` flattens the map into an array. */

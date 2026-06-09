@@ -42,6 +42,11 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
       if (left) return;
 
       if (!snap.exists()) {
+        // Guests can only join existing sessions, never create one.
+        if (user.isGuest) {
+          setStatus('disconnected');
+          return;
+        }
         await setDoc(retroRef, {
           hostId: user.id,
           activeHostId: user.id,
@@ -52,6 +57,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
               photoURL: user.photoURL || null,
               isHost: true,
               online: true,
+              isGuest: false,
             },
           },
           participantIds: [user.id],
@@ -96,6 +102,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
               photoURL: user.photoURL || null,
               isHost: data.hostId === user.id,
               online: true,
+              isGuest: user.isGuest,
             },
             participantIds: arrayUnion(user.id),
           });
@@ -150,7 +157,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
         }).catch(() => {});
       }
     };
-  }, [retroId, user.id, user.displayName, user.photoURL]);
+  }, [retroId, user.id, user.displayName, user.photoURL, user.isGuest]);
 
   const isEnded = () => retroStateRef.current?.status === 'ended';
 

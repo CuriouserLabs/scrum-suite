@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signInAnonymously, updateProfile, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 import type { User, UserContextValue } from '../types';
 
@@ -15,9 +15,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         setUser({
           id: firebaseUser.uid,
-          displayName: firebaseUser.displayName || 'User',
+          displayName: firebaseUser.displayName || 'Guest',
           photoURL: firebaseUser.photoURL,
           email: firebaseUser.email,
+          isGuest: firebaseUser.isAnonymous,
         });
       } else {
         setUser(null);
@@ -34,12 +35,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
+  const loginAsGuest = useCallback(async (displayName: string) => {
+    const cred = await signInAnonymously(auth);
+    await updateProfile(cred.user, { displayName });
+    // onAuthStateChanged fires before updateProfile completes (and won't refire
+    // for a profile change), so push the resolved name into state ourselves.
+    setUser({
+      id: cred.user.uid,
+      displayName,
+      photoURL: null,
+      email: null,
+      isGuest: true,
+    });
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut(auth);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, login, loginWithEmail, logout }}>
+    <UserContext.Provider value={{ user, loading, login, loginWithEmail, loginAsGuest, logout }}>
       {children}
     </UserContext.Provider>
   );

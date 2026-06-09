@@ -4,7 +4,8 @@ rules_version = '2';
 // Data Model
 // ===============================================================
 //
-// All operations require Firebase Authentication.
+// All operations require Firebase Authentication. Anonymous (guest) users may
+// read and join existing sessions, but only non-anonymous users can create them.
 //
 // Collection: rooms
 // Document ID: 8-character alphanumeric room code
@@ -13,7 +14,7 @@ rules_version = '2';
 //   - activeHostId:   string (required, mutable)   — who currently holds primary control
 //   - status:         string (required) — 'active' or 'ended'
 //   - participants:   map (required) — keyed by userId
-//       { displayName: string(1–50), photoURL: string|null, isHost: bool, online: bool }
+//       { displayName: string(1–50), photoURL: string|null, isHost: bool, online: bool, isGuest: bool }
 //   - participantIds: list of userId strings (required) — for querying user's sessions
 //   - votes:          map (required) — keyed by userId, value is number or "?"
 //   - revealed:       bool (required)
@@ -48,6 +49,12 @@ service cloud.firestore {
 
     function isAuthenticated() {
       return request.auth != null;
+    }
+
+    // Anonymous (guest) users may join existing sessions but never create them.
+    function isNotGuest() {
+      return isAuthenticated()
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
     function isValidRoomId(roomId) {
@@ -136,7 +143,7 @@ service cloud.firestore {
 
       allow list: if isAuthenticated();
 
-      allow create: if isAuthenticated()
+      allow create: if isNotGuest()
                     && isValidRoomId(roomId)
                     && isValidRoomCreate(request.resource.data);
 
@@ -224,7 +231,7 @@ service cloud.firestore {
 
       allow list: if isAuthenticated();
 
-      allow create: if isAuthenticated()
+      allow create: if isNotGuest()
                     && isValidRoomId(retroId)
                     && isValidRetroCreate(request.resource.data);
 

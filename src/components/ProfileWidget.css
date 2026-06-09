@@ -32,6 +32,17 @@
   padding: 0.25rem 0.5rem;
 }
 
+.profile-guest-tag {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
 .profile-logout {
   background: none;
   border: none;
