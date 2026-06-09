@@ -6,11 +6,27 @@ import {
 } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { db } from '../utils/firebase';
-import { DEFAULT_COLUMN_IDS } from '../utils/retroColumns';
+import { DEFAULT_COLUMN_IDS, ACTION_ITEMS_COLUMN_ID } from '../utils/retroColumns';
 import type {
   User, Role, ConnectionState, RetroDoc, RetroState, RetroSettings,
   ActionItem, PreviousRetroSummary, UseRetroResult,
 } from '../types';
+
+/**
+ * Action items worth carrying into a new session from a previous retro. This is
+ * the combination of both tabs: the live "Action Items" cards added during that
+ * session, plus its still-pending "Previous Action Items" (which were themselves
+ * carried over from even earlier sessions). Returns the texts in creation order.
+ */
+function collectImportableActionItems(data: RetroDoc): string[] {
+  const actionCards = Object.values(data.cards || {})
+    .filter((c) => c.columnId === ACTION_ITEMS_COLUMN_ID);
+  const pendingPrevious = Object.values(data.previousActionItems || {})
+    .filter((i) => !i.done);
+  return [...actionCards, ...pendingPrevious]
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .map((i) => i.text);
+}
 
 function normalizeState(data: RetroDoc | undefined): RetroState | null {
   if (!data) return null;
@@ -303,18 +319,19 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
       .filter((d) => d.id !== retroId)
       .map((d) => {
         const data = d.data() as RetroDoc;
-        const actionItems = data.previousActionItems || {};
-        const pending = Object.values(actionItems).filter((i) => !i.done);
+        const importable = collectImportableActionItems(data);
         return {
           id: d.id,
           title: data.title || '',
           status: data.status,
           createdAt: data.createdAt?.toDate?.() || new Date(0),
-          actionItemCount: Object.keys(actionItems).length,
-          pendingCount: pending.length,
+          actionItemCount: importable.length,
+          pendingCount: importable.length,
         };
       })
-      .filter((r) => r.actionItemCount > 0)
+      // Show recent sessions even with nothing to import, so the user can
+      // confidently pick the correct previous session instead of guessing and
+      // re-importing stale items from an older one.
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 3);
   }, [user.id, retroId]);
@@ -323,21 +340,21 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     if (isEnded()) return 0;
     const snap = await getDoc(doc(db, 'retros', sourceRetroId));
     if (!snap.exists()) return 0;
-    const items = (snap.data() as RetroDoc).previousActionItems || {};
-    const pending = Object.entries(items).filter(([, i]) => !i.done);
-    if (pending.length === 0) return 0;
+    const texts = collectImportableActionItems(snap.data() as RetroDoc);
+    if (texts.length === 0) return 0;
     const updates: Record<string, ActionItem> = {};
-    for (const [, item] of pending) {
+    texts.forEach((text, idx) => {
       const newId = nanoid(12);
       updates[`previousActionItems.${newId}`] = {
-        text: item.text,
+        text,
         done: false,
         authorId: user.id,
-        createdAt: Date.now(),
+        // Preserve ordering with monotonically increasing timestamps.
+        createdAt: Date.now() + idx,
       };
-    }
+    });
     await updateDoc(doc(db, 'retros', retroId), updates);
-    return pending.length;
+    return texts.length;
   }, [retroId, user.id]);
 
   return {

@@ -138,7 +138,7 @@ export default function PreviousActionItems({
               {loadingRetros ? (
                 <div className="pai-import-loading">Loading sessions…</div>
               ) : previousRetros.length === 0 ? (
-                <div className="pai-import-empty">No previous sessions with action items found</div>
+                <div className="pai-import-empty">No previous sessions found</div>
               ) : (
                 <>
                   <div className="pai-import-hint">Select a session to import its pending action items</div>
@@ -146,9 +146,9 @@ export default function PreviousActionItems({
                     {previousRetros.map((retro) => (
                       <button
                         key={retro.id}
-                        className={`pai-import-session ${importing === retro.id ? 'importing' : ''} ${importResult?.retroId === retro.id ? 'imported' : ''}`}
+                        className={`pai-import-session ${importing === retro.id ? 'importing' : ''} ${importResult?.retroId === retro.id ? 'imported' : ''} ${retro.pendingCount === 0 ? 'empty' : ''}`}
                         onClick={() => handleImport(retro.id)}
-                        disabled={importing !== null || importResult?.retroId === retro.id}
+                        disabled={importing !== null || importResult?.retroId === retro.id || retro.pendingCount === 0}
                       >
                         <div className="pai-import-session__info">
                           <span className="pai-import-session__title">
@@ -163,6 +163,8 @@ export default function PreviousActionItems({
                             <span className="pai-import-session__done">✓ {importResult.count} imported</span>
                           ) : importing === retro.id ? (
                             <span className="pai-import-session__spinner">Importing…</span>
+                          ) : retro.pendingCount === 0 ? (
+                            <span className="pai-import-session__count">Nothing to import</span>
                           ) : (
                             <span className="pai-import-session__count">{retro.pendingCount} pending</span>
                           )}

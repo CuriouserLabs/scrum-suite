@@ -9,6 +9,9 @@ export const ALL_COLUMNS: Column[] = [
 
 export const DEFAULT_COLUMN_IDS: string[] = ['well', 'improve', 'actions', 'previous-actions'];
 
+/** Column id for the live "Action Items" added during a retro session. */
+export const ACTION_ITEMS_COLUMN_ID = 'actions';
+
 export function getColumnById(id: string): Column | undefined {
   return ALL_COLUMNS.find((c) => c.id === id);
 }
