@@ -167,6 +167,15 @@
   cursor: default;
 }
 
+.pai-import-session.empty {
+  opacity: 0.6;
+}
+
+.pai-import-session.empty .pai-import-session__count {
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.12);
+}
+
 .pai-import-session.imported {
   background: rgba(20, 184, 166, 0.08);
   border-color: rgba(20, 184, 166, 0.2);

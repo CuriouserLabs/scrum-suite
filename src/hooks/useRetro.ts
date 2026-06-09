@@ -329,7 +329,9 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
           pendingCount: importable.length,
         };
       })
-      .filter((r) => r.actionItemCount > 0)
+      // Show recent sessions even with nothing to import, so the user can
+      // confidently pick the correct previous session instead of guessing and
+      // re-importing stale items from an older one.
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 3);
   }, [user.id, retroId]);
