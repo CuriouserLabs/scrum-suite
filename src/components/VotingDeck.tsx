@@ -1,8 +1,15 @@
+import type { VoteValue } from '../types';
 import './VotingDeck.css';
 
-const FIBONACCI = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, '?'];
+const FIBONACCI: VoteValue[] = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, '?'];
 
-export default function VotingDeck({ selectedValue, onVote, disabled }) {
+interface VotingDeckProps {
+  selectedValue: VoteValue | undefined;
+  onVote: (value: VoteValue) => void;
+  disabled: boolean;
+}
+
+export default function VotingDeck({ selectedValue, onVote, disabled }: VotingDeckProps) {
   return (
     <div className="voting-deck">
       {FIBONACCI.map((value) => {

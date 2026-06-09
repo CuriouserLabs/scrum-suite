@@ -16,6 +16,7 @@ A real-time agile toolkit for scrum teams. Run sprint planning poker sessions an
 ## Tech stack
 
 - [React 19](https://react.dev) + [Vite](https://vite.dev)
+- [TypeScript](https://www.typescriptlang.org) (strict mode) — shared domain types in `src/types/`
 - [Cloud Firestore](https://firebase.google.com/docs/firestore) for real-time state sync
 - [React Router v7](https://reactrouter.com)
 - [Firebase Hosting](https://firebase.google.com/docs/hosting) for deployment
@@ -55,7 +56,8 @@ You need the [Firebase CLI](https://firebase.google.com/docs/cli) installed and 
 | Command | Description |
 |---|---|
 | `npm run dev` | Start local dev server |
-| `npm run build` | Production build → `dist/` |
+| `npm run build` | Type-check (`tsc -b`) + production build → `dist/` |
+| `npm run type-check` | Run the TypeScript compiler with no emit |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint |
 | `firebase deploy` | Build and deploy to Firebase Hosting |

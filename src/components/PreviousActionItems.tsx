@@ -1,12 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
+import type { ActionItem, PreviousRetroSummary } from '../types';
 import './PreviousActionItems.css';
 
 const COLUMN_COLOR = '#14b8a6';
 
-function formatSessionDate(date) {
+interface ImportResult {
+  count: number;
+  retroId: string;
+}
+
+interface PreviousActionItemsProps {
+  items: Record<string, ActionItem>;
+  isHost: boolean;
+  onAdd: (text: string) => void;
+  onToggle: (itemId: string) => void;
+  onDelete: (itemId: string) => void;
+  onFetchPreviousRetros: () => Promise<PreviousRetroSummary[]>;
+  onImportActionItems: (sourceRetroId: string) => Promise<number>;
+}
+
+function formatSessionDate(date: Date) {
   const now = new Date();
   const d = new Date(date);
-  const diffMs = now - d;
+  const diffMs = now.getTime() - d.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
 
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -21,17 +38,17 @@ function formatSessionDate(date) {
 export default function PreviousActionItems({
   items, isHost, onAdd, onToggle, onDelete,
   onFetchPreviousRetros, onImportActionItems,
-}) {
+}: PreviousActionItemsProps) {
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState('');
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [importOpen, setImportOpen] = useState(false);
-  const [previousRetros, setPreviousRetros] = useState([]);
+  const [previousRetros, setPreviousRetros] = useState<PreviousRetroSummary[]>([]);
   const [loadingRetros, setLoadingRetros] = useState(false);
-  const [importing, setImporting] = useState(null);
-  const [importResult, setImportResult] = useState(null);
-  const importRef = useRef(null);
+  const [importing, setImporting] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const importRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (adding && textareaRef.current) textareaRef.current.focus();
@@ -39,8 +56,8 @@ export default function PreviousActionItems({
 
   useEffect(() => {
     if (!importOpen) return;
-    function handleClickOutside(e) {
-      if (importRef.current && !importRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (importRef.current && !importRef.current.contains(e.target as Node)) {
         setImportOpen(false);
       }
     }
@@ -66,7 +83,7 @@ export default function PreviousActionItems({
     setLoadingRetros(false);
   };
 
-  const handleImport = async (sourceRetroId) => {
+  const handleImport = async (sourceRetroId: string) => {
     setImporting(sourceRetroId);
     try {
       const count = await onImportActionItems(sourceRetroId);
@@ -90,7 +107,7 @@ export default function PreviousActionItems({
     setAdding(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
     if (e.key === 'Escape') { setNewText(''); setAdding(false); }
   };
@@ -121,7 +138,7 @@ export default function PreviousActionItems({
               {loadingRetros ? (
                 <div className="pai-import-loading">Loading sessions…</div>
               ) : previousRetros.length === 0 ? (
-                <div className="pai-import-empty">No previous sessions with action items found</div>
+                <div className="pai-import-empty">No previous sessions found</div>
               ) : (
                 <>
                   <div className="pai-import-hint">Select a session to import its pending action items</div>
@@ -129,9 +146,9 @@ export default function PreviousActionItems({
                     {previousRetros.map((retro) => (
                       <button
                         key={retro.id}
-                        className={`pai-import-session ${importing === retro.id ? 'importing' : ''} ${importResult?.retroId === retro.id ? 'imported' : ''}`}
+                        className={`pai-import-session ${importing === retro.id ? 'importing' : ''} ${importResult?.retroId === retro.id ? 'imported' : ''} ${retro.pendingCount === 0 ? 'empty' : ''}`}
                         onClick={() => handleImport(retro.id)}
-                        disabled={importing !== null || importResult?.retroId === retro.id}
+                        disabled={importing !== null || importResult?.retroId === retro.id || retro.pendingCount === 0}
                       >
                         <div className="pai-import-session__info">
                           <span className="pai-import-session__title">
@@ -146,6 +163,8 @@ export default function PreviousActionItems({
                             <span className="pai-import-session__done">✓ {importResult.count} imported</span>
                           ) : importing === retro.id ? (
                             <span className="pai-import-session__spinner">Importing…</span>
+                          ) : retro.pendingCount === 0 ? (
+                            <span className="pai-import-session__count">Nothing to import</span>
                           ) : (
                             <span className="pai-import-session__count">{retro.pendingCount} pending</span>
                           )}

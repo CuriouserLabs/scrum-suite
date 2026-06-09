@@ -4,8 +4,11 @@ import {
   serverTimestamp, arrayUnion, arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
+import type {
+  User, Role, ConnectionState, RoomDoc, RoomState, VoteValue, UseRoomResult,
+} from '../types';
 
-function normalizeState(data) {
+function normalizeState(data: RoomDoc | undefined): RoomState | null {
   if (!data) return null;
   return {
     ...data,
@@ -16,16 +19,16 @@ function normalizeState(data) {
   };
 }
 
-export function useRoom(roomId, user) {
-  const [role, setRole] = useState(null);
-  const [roomState, setRoomState] = useState(null);
-  const [status, setStatus] = useState('connecting');
-  const roomStateRef = useRef(null);
+export function useRoom(roomId: string, user: User): UseRoomResult {
+  const [role, setRole] = useState<Role | null>(null);
+  const [roomState, setRoomState] = useState<RoomState | null>(null);
+  const [status, setStatus] = useState<ConnectionState>('connecting');
+  const roomStateRef = useRef<RoomState | null>(null);
   const joinedRef = useRef(false);
 
   useEffect(() => {
     const roomRef = doc(db, 'rooms', roomId);
-    let unsubscribe = null;
+    let unsubscribe: (() => void) | null = null;
     let left = false;
     joinedRef.current = false;
 
@@ -35,6 +38,11 @@ export function useRoom(roomId, user) {
       if (left) return;
 
       if (!snap.exists()) {
+        // Guests can only join existing sessions, never create one.
+        if (user.isGuest) {
+          setStatus('disconnected');
+          return;
+        }
         await setDoc(roomRef, {
           hostId: user.id,
           activeHostId: user.id,
@@ -45,6 +53,7 @@ export function useRoom(roomId, user) {
               photoURL: user.photoURL || null,
               isHost: true,
               online: true,
+              isGuest: false,
             },
           },
           participantIds: [user.id],
@@ -59,7 +68,7 @@ export function useRoom(roomId, user) {
         setRole('host');
         setStatus('ready');
       } else {
-        const data = snap.data();
+        const data = snap.data() as RoomDoc;
 
         if (data.status === 'ended') {
           setStatus('ended');
@@ -85,6 +94,7 @@ export function useRoom(roomId, user) {
               photoURL: user.photoURL || null,
               isHost: isOriginalHost,
               online: true,
+              isGuest: user.isGuest,
             },
             participantIds: arrayUnion(user.id),
           });
@@ -100,7 +110,7 @@ export function useRoom(roomId, user) {
           setStatus('disconnected');
           return;
         }
-        const data = snap.data();
+        const data = snap.data() as RoomDoc;
 
         if (data.status === 'ended') {
           setStatus('ended');
@@ -139,7 +149,7 @@ export function useRoom(roomId, user) {
         }).catch(() => {});
       }
     };
-  }, [roomId, user.id, user.displayName, user.photoURL]);
+  }, [roomId, user.id, user.displayName, user.photoURL, user.isGuest]);
 
   const isEnded = () => roomStateRef.current?.status === 'ended';
 
@@ -147,7 +157,7 @@ export function useRoom(roomId, user) {
     updateDoc(doc(db, 'rooms', roomId), { status: 'ended' }).catch(console.error);
   }, [roomId]);
 
-  const submitVote = useCallback((value) => {
+  const submitVote = useCallback((value: VoteValue) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), {
       [`votes.${user.id}`]: value,
@@ -169,12 +179,12 @@ export function useRoom(roomId, user) {
     }).catch(console.error);
   }, [roomId]);
 
-  const setStoryTitle = useCallback((title) => {
+  const setStoryTitle = useCallback((title: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), { storyTitle: title }).catch(console.error);
   }, [roomId]);
 
-  const makeCoHost = useCallback((userId) => {
+  const makeCoHost = useCallback((userId: string) => {
     if (isEnded()) return;
     const current = roomStateRef.current;
     const alreadyCoHost = current?.coHosts?.includes(userId);
@@ -183,7 +193,7 @@ export function useRoom(roomId, user) {
     }).catch(console.error);
   }, [roomId]);
 
-  const handoverTo = useCallback((userId) => {
+  const handoverTo = useCallback((userId: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'rooms', roomId), {
       activeHostId: userId,

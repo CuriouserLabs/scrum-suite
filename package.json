@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "build:prod": "vite build --mode production",
+    "build": "tsc -b && vite build",
+    "build:dev": "tsc -b && vite build --mode development",
+    "build:prod": "tsc -b && vite build --mode production",
     "lint": "eslint .",
+    "type-check": "tsc -b",
     "preview": "vite preview",
     "deploy:dev": "firebase use dev && npm run build:dev && firebase deploy",
     "deploy:prod": "firebase use production && npm run build:prod && firebase deploy",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
@@ -33,6 +35,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1",
     "vite": "^8.0.12"
   }
 }

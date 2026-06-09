@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import type { FormEvent, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../utils/firebase';
-import { useUser } from '../contexts/UserContext';
+import { useAuthUser } from '../contexts/UserContext';
+import type { ActiveSession, RoomDoc } from '../types';
 import './HomePage.css';
 
-function useActiveSessions(userId, mode) {
-  const [sessions, setSessions] = useState([]);
+type Mode = 'poker' | 'retro';
+
+function useActiveSessions(userId: string, mode: Mode | null) {
+  const [sessions, setSessions] = useState<ActiveSession[]>([]);
 
   useEffect(() => {
     if (!mode || !userId) {
@@ -22,8 +26,8 @@ function useActiveSessions(userId, mode) {
     );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      const results = snap.docs.map((d) => {
-        const data = d.data();
+      const results: ActiveSession[] = snap.docs.map((d) => {
+        const data = d.data() as RoomDoc;
         const participants = Object.entries(data.participants || {});
         const onlineCount = participants.filter(([, p]) => p.online).length;
         return {
@@ -50,7 +54,7 @@ function useActiveSessions(userId, mode) {
   return { sessions };
 }
 
-function formatTimeAgo(date) {
+function formatTimeAgo(date: Date | null) {
   if (!date) return '';
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return 'just now';
@@ -63,13 +67,13 @@ function formatTimeAgo(date) {
 }
 
 export default function HomePage() {
-  const { user } = useUser();
+  const user = useAuthUser();
   const navigate = useNavigate();
-  const [selectedMode, setSelectedMode] = useState(null);
+  const [selectedMode, setSelectedMode] = useState<Mode | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
-  const [confirmingEndId, setConfirmingEndId] = useState(null);
-  const confirmEndTimerRef = useRef(null);
+  const [confirmingEndId, setConfirmingEndId] = useState<string | null>(null);
+  const confirmEndTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { sessions } = useActiveSessions(user.id, selectedMode);
 
   const createSession = () => {
@@ -78,7 +82,7 @@ export default function HomePage() {
     navigate(path);
   };
 
-  const handleJoin = (e) => {
+  const handleJoin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const input = joinCode.trim();
     if (!input) return;
@@ -98,12 +102,12 @@ export default function HomePage() {
     navigate(path);
   };
 
-  const rejoinSession = (sessionId) => {
+  const rejoinSession = (sessionId: string) => {
     const path = selectedMode === 'poker' ? `/room/${sessionId}` : `/retro/${sessionId}`;
     navigate(path);
   };
 
-  const handleEndSession = (e, sessionId) => {
+  const handleEndSession = (e: MouseEvent<HTMLButtonElement>, sessionId: string) => {
     e.stopPropagation();
     if (confirmingEndId !== sessionId) {
       clearTimeout(confirmEndTimerRef.current);
@@ -130,7 +134,9 @@ export default function HomePage() {
       <div className="home-hero">
         <h1>Plan smarter,<br />ship faster.</h1>
         <p className="home-tagline">
-          Real-time collaboration for agile teams — sign in with Google, share a link, and go.
+          {user.isGuest
+            ? 'Join a session your team has shared — paste the link or code below.'
+            : 'Real-time collaboration for agile teams — sign in with Google, share a link, and go.'}
         </p>
       </div>
 
@@ -194,7 +200,7 @@ export default function HomePage() {
                         {s.onlineCount} online
                         <span className="active-session-total"> / {s.totalParticipants} total</span>
                       </span>
-                      {selectedMode === 'poker' && s.round > 1 && (
+                      {selectedMode === 'poker' && (s.round ?? 0) > 1 && (
                         <span className="active-session-round">Round {s.round}</span>
                       )}
                     </div>
@@ -205,20 +211,25 @@ export default function HomePage() {
           )}
 
           <div className="home-actions">
-            <div className="action-card create-card">
-              <div className="action-icon">{selectedMode === 'poker' ? '♣' : '↻'}</div>
-              <h2>{selectedMode === 'poker' ? 'Create a Room' : 'Create a Retro'}</h2>
-              <p>
-                {selectedMode === 'poker'
-                  ? 'Start a new planning session and share the link with your team.'
-                  : 'Start a new retrospective and invite your team to reflect.'}
-              </p>
-              <button className="btn-primary" onClick={createSession}>
-                {selectedMode === 'poker' ? 'Create Room' : 'Create Retro'}
-              </button>
-            </div>
+            {/* Guests can only join existing sessions, not create new ones. */}
+            {!user.isGuest && (
+              <>
+                <div className="action-card create-card">
+                  <div className="action-icon">{selectedMode === 'poker' ? '♣' : '↻'}</div>
+                  <h2>{selectedMode === 'poker' ? 'Create a Room' : 'Create a Retro'}</h2>
+                  <p>
+                    {selectedMode === 'poker'
+                      ? 'Start a new planning session and share the link with your team.'
+                      : 'Start a new retrospective and invite your team to reflect.'}
+                  </p>
+                  <button className="btn-primary" onClick={createSession}>
+                    {selectedMode === 'poker' ? 'Create Room' : 'Create Retro'}
+                  </button>
+                </div>
 
-            <div className="action-divider">or</div>
+                <div className="action-divider">or</div>
+              </>
+            )}
 
             <div className="action-card join-card">
               <div className="action-icon">&#128279;</div>

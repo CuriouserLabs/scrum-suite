@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext';
+import { useAuthUser } from '../contexts/UserContext';
 import { useRetro } from '../hooks/useRetro';
 import { getColumnById } from '../utils/retroColumns';
 import ConnectionStatus from '../components/ConnectionStatus';
@@ -8,16 +8,17 @@ import RetroColumn from '../components/RetroColumn';
 import RetroHostControls from '../components/RetroHostControls';
 import RetroTimer from '../components/RetroTimer';
 import PreviousActionItems from '../components/PreviousActionItems';
+import type { CardWithId, Column } from '../types';
 import './RetroPage.css';
 
 export default function RetroPage() {
-  const { retroId } = useParams();
-  const { user } = useUser();
+  const { retroId } = useParams<{ retroId: string }>();
+  const user = useAuthUser();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [confirmingEnd, setConfirmingEnd] = useState(false);
-  const confirmEndTimerRef = useRef(null);
+  const confirmEndTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const {
     retroState, status, role,
@@ -27,21 +28,21 @@ export default function RetroPage() {
     startTimer, stopTimer,
     addActionItem, toggleActionItem, deleteActionItem,
     fetchPreviousRetros, importActionItems,
-  } = useRetro(retroId, user);
+  } = useRetro(retroId!, user);
 
   const isHost = role === 'host';
   const activeHostId = retroState?.activeHostId || retroState?.hostId;
 
   const [localTitle, setLocalTitle] = useState('');
-  const titleSourceRef = useRef('remote');
-  const titleDebounceRef = useRef(null);
+  const titleSourceRef = useRef<'remote' | 'local'>('remote');
+  const titleDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (titleSourceRef.current === 'local') return;
     setLocalTitle(retroState?.title || '');
   }, [retroState?.title]);
 
-  const handleTitleChange = (val) => {
+  const handleTitleChange = (val: string) => {
     const clamped = val.slice(0, 100);
     titleSourceRef.current = 'local';
     setLocalTitle(clamped);
@@ -52,7 +53,7 @@ export default function RetroPage() {
     }, 400);
   };
 
-  function showToast(msg) {
+  function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
@@ -76,7 +77,7 @@ export default function RetroPage() {
     }
   }, [retroState, user.id]);
 
-  const prevRevealedRef = useRef(null);
+  const prevRevealedRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (!retroState) return;
     const revealed = retroState.settings?.revealed;
@@ -113,7 +114,7 @@ export default function RetroPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getCardsForColumn = (columnId) => {
+  const getCardsForColumn = (columnId: string): CardWithId[] => {
     if (!retroState?.cards) return [];
     return Object.entries(retroState.cards)
       .filter(([, c]) => c.columnId === columnId)
@@ -123,7 +124,7 @@ export default function RetroPage() {
       });
   };
 
-  const getCardCountForUser = (userId) => {
+  const getCardCountForUser = (userId: string) => {
     if (!retroState?.cards) return 0;
     return Object.values(retroState.cards).filter((c) => c.authorId === userId).length;
   };
@@ -169,7 +170,7 @@ export default function RetroPage() {
 
   const activeColumns = (retroState?.columns || [])
     .map(getColumnById)
-    .filter((col) => col && col.id !== 'previous-actions');
+    .filter((col): col is Column => col != null && col.id !== 'previous-actions');
 
   const showPreviousActionItems = retroState?.columns?.includes('previous-actions');
 
@@ -247,6 +248,7 @@ export default function RetroPage() {
                       {pIsActiveHost && <span className="lead-badge">lead</span>}
                       {p.isHost && !pIsActiveHost && <span className="host-badge">host</span>}
                       {pIsCoHost && <span className="cohost-badge">co-host</span>}
+                      {p.isGuest && <span className="guest-badge">guest</span>}
                     </div>
                   </div>
                   <span className="retro-participant-card-count" title="Cards added">
@@ -256,7 +258,7 @@ export default function RetroPage() {
               );
             })}
             {!retroState && <p className="retro-participants-hint">Connecting…</p>}
-            {retroState?.participants?.length <= 1 && (
+            {retroState && retroState.participants.length <= 1 && (
               <p className="retro-participants-hint">Share the link for others to join.</p>
             )}
           </div>
@@ -320,11 +322,11 @@ export default function RetroPage() {
   );
 }
 
-function getInitials(name) {
+function getInitials(name: string) {
   return (name || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function avatarColor(id) {
+function avatarColor(id: string) {
   const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);

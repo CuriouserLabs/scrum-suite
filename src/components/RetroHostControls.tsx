@@ -1,18 +1,26 @@
 import { ALL_COLUMNS } from '../utils/retroColumns';
+import type { RetroState, RetroSettings } from '../types';
 import './RetroHostControls.css';
+
+interface RetroHostControlsProps {
+  retroState: RetroState | null;
+  updateColumns: (columnIds: string[]) => void;
+  updateSettings: (partial: Partial<RetroSettings>) => void;
+  revealCards: () => void;
+}
 
 export default function RetroHostControls({
   retroState, updateColumns, updateSettings, revealCards,
-}) {
-  const settings = retroState?.settings || {};
+}: RetroHostControlsProps) {
+  const settings: Partial<RetroSettings> = retroState?.settings || {};
   const activeColumnIds = retroState?.columns || [];
   const inactiveColumns = ALL_COLUMNS.filter((c) => !activeColumnIds.includes(c.id));
 
-  const removeColumn = (id) => {
+  const removeColumn = (id: string) => {
     updateColumns(activeColumnIds.filter((cid) => cid !== id));
   };
 
-  const addColumn = (id) => {
+  const addColumn = (id: string) => {
     const ordered = ALL_COLUMNS.map((c) => c.id).filter(
       (cid) => activeColumnIds.includes(cid) || cid === id
     );

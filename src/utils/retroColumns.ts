@@ -1,12 +1,17 @@
-export const ALL_COLUMNS = [
+import type { Column } from '../types';
+
+export const ALL_COLUMNS: Column[] = [
   { id: 'well',             label: 'What Went Well',         color: '#10b981', icon: '✓' },
   { id: 'improve',          label: 'What Needs Improvement', color: '#f43f5e', icon: '△' },
   { id: 'actions',          label: 'Action Items',           color: '#3b82f6', icon: '→' },
   { id: 'previous-actions', label: 'Previous Action Items',  color: '#14b8a6', icon: '↩' },
 ];
 
-export const DEFAULT_COLUMN_IDS = ['well', 'improve', 'actions', 'previous-actions'];
+export const DEFAULT_COLUMN_IDS: string[] = ['well', 'improve', 'actions', 'previous-actions'];
 
-export function getColumnById(id) {
+/** Column id for the live "Action Items" added during a retro session. */
+export const ACTION_ITEMS_COLUMN_ID = 'actions';
+
+export function getColumnById(id: string): Column | undefined {
   return ALL_COLUMNS.find((c) => c.id === id);
 }

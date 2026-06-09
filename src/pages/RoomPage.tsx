@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { ChangeEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext';
+import { useAuthUser } from '../contexts/UserContext';
 import { useRoom } from '../hooks/useRoom';
 import ConnectionStatus from '../components/ConnectionStatus';
 import VotingDeck from '../components/VotingDeck';
@@ -8,21 +9,21 @@ import VoteBoard from '../components/VoteBoard';
 import './RoomPage.css';
 
 export default function RoomPage() {
-  const { roomId } = useParams();
-  const { user } = useUser();
+  const { roomId } = useParams<{ roomId: string }>();
+  const user = useAuthUser();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [confirmingEnd, setConfirmingEnd] = useState(false);
-  const confirmEndTimerRef = useRef(null);
+  const confirmEndTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const deckHeightRef = useRef(210);
   const [deckHeight, setDeckHeight] = useState(210);
 
-  const handleDividerDrag = useCallback((e) => {
+  const handleDividerDrag = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const startY = e.clientY;
     const startHeight = deckHeightRef.current;
 
-    const onMove = (ev) => {
+    const onMove = (ev: MouseEvent) => {
       const delta = startY - ev.clientY;
       const next = Math.min(340, Math.max(130, startHeight + delta));
       deckHeightRef.current = next;
@@ -43,7 +44,7 @@ export default function RoomPage() {
   }, []);
 
   const { roomState, status, role, endSession, submitVote, revealVotes, resetRound, setStoryTitle, makeCoHost, handoverTo } =
-    useRoom(roomId, user);
+    useRoom(roomId!, user);
 
   const isHost = role === 'host';
   const activeHostId = roomState?.activeHostId || roomState?.hostId;
@@ -54,7 +55,7 @@ export default function RoomPage() {
   // Local story title — prevents cursor-jump from Firestore echo
   const [localTitle, setLocalTitle] = useState('');
   const lastWrittenTitleRef = useRef('');
-  const titleDebounceRef = useRef(null);
+  const titleDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     const remote = roomState?.storyTitle || '';
     if (remote !== lastWrittenTitleRef.current) {
@@ -62,7 +63,7 @@ export default function RoomPage() {
       setLocalTitle(remote);
     }
   }, [roomState?.storyTitle]);
-  const handleTitleChange = (e) => {
+  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setLocalTitle(val);
     lastWrittenTitleRef.current = val;
@@ -76,7 +77,7 @@ export default function RoomPage() {
     return () => { document.title = 'Scrum Suite'; };
   }, [roomId]);
 
-  function showToast(msg) {
+  function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
@@ -217,6 +218,7 @@ export default function RoomPage() {
                       {pIsActiveHost && <span className="lead-badge">lead</span>}
                       {p.isHost && !pIsActiveHost && <span className="host-badge">host</span>}
                       {pIsCoHost && <span className="cohost-badge">co-host</span>}
+                      {p.isGuest && <span className="guest-badge">guest</span>}
                     </div>
                   </div>
                   <div className="participant-actions">
@@ -251,7 +253,7 @@ export default function RoomPage() {
               );
             })}
             {!roomState && <p className="participants-hint">Connecting…</p>}
-            {roomState?.participants?.length <= 1 && (
+            {roomState && roomState.participants.length <= 1 && (
               <p className="participants-hint">Share the link for others to join.</p>
             )}
           </div>
@@ -338,11 +340,11 @@ export default function RoomPage() {
   );
 }
 
-function getInitials(name) {
+function getInitials(name: string) {
   return (name || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function avatarColor(id) {
+function avatarColor(id: string) {
   const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);

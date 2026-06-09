@@ -1,5 +1,19 @@
 # Scrum Suite - Claude Development Guide
 
+## Language & Types
+
+The codebase is **TypeScript** (`.ts`/`.tsx`) with `strict` mode enabled.
+
+- Shared domain types live in `src/types/` (`models.ts` for entities, `contracts.ts`
+  for hook/context return shapes) — import them via `import type { ... } from '../types'`.
+- Run `npm run type-check` (`tsc -b`) to type-check without emitting. The `build`
+  scripts run this first, so a type error fails the build.
+- Firestore documents have a raw shape (`RoomDoc`/`RetroDoc`, with `participants` as a
+  keyed map) and a normalized client shape (`RoomState`/`RetroState`, with `participants`
+  as an array) — see `normalizeState` in the hooks.
+- Pages rendered only on authenticated routes use `useAuthUser()` (returns a non-null
+  `User`); everything else uses `useUser()`.
+
 ## Testing in Preview Browser
 
 The preview browser cannot complete Google OAuth sign-in (popup/redirect blocked).

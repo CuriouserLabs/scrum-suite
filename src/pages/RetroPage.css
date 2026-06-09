@@ -296,7 +296,8 @@
 
 .retro-participant-badges .lead-badge,
 .retro-participant-badges .host-badge,
-.retro-participant-badges .cohost-badge {
+.retro-participant-badges .cohost-badge,
+.retro-participant-badges .guest-badge {
   font-size: 0.55rem;
   text-transform: uppercase;
   font-weight: 700;
@@ -318,6 +319,11 @@
 .retro-participant-badges .cohost-badge {
   background: rgba(245, 158, 11, 0.18);
   color: #fbbf24;
+}
+
+.retro-participant-badges .guest-badge {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
 }
 
 .retro-participant-card-count {
