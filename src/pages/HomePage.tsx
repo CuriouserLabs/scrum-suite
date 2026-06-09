@@ -134,7 +134,9 @@ export default function HomePage() {
       <div className="home-hero">
         <h1>Plan smarter,<br />ship faster.</h1>
         <p className="home-tagline">
-          Real-time collaboration for agile teams — sign in with Google, share a link, and go.
+          {user.isGuest
+            ? 'Join a session your team has shared — paste the link or code below.'
+            : 'Real-time collaboration for agile teams — sign in with Google, share a link, and go.'}
         </p>
       </div>
 
@@ -209,20 +211,25 @@ export default function HomePage() {
           )}
 
           <div className="home-actions">
-            <div className="action-card create-card">
-              <div className="action-icon">{selectedMode === 'poker' ? '♣' : '↻'}</div>
-              <h2>{selectedMode === 'poker' ? 'Create a Room' : 'Create a Retro'}</h2>
-              <p>
-                {selectedMode === 'poker'
-                  ? 'Start a new planning session and share the link with your team.'
-                  : 'Start a new retrospective and invite your team to reflect.'}
-              </p>
-              <button className="btn-primary" onClick={createSession}>
-                {selectedMode === 'poker' ? 'Create Room' : 'Create Retro'}
-              </button>
-            </div>
+            {/* Guests can only join existing sessions, not create new ones. */}
+            {!user.isGuest && (
+              <>
+                <div className="action-card create-card">
+                  <div className="action-icon">{selectedMode === 'poker' ? '♣' : '↻'}</div>
+                  <h2>{selectedMode === 'poker' ? 'Create a Room' : 'Create a Retro'}</h2>
+                  <p>
+                    {selectedMode === 'poker'
+                      ? 'Start a new planning session and share the link with your team.'
+                      : 'Start a new retrospective and invite your team to reflect.'}
+                  </p>
+                  <button className="btn-primary" onClick={createSession}>
+                    {selectedMode === 'poker' ? 'Create Room' : 'Create Retro'}
+                  </button>
+                </div>
 
-            <div className="action-divider">or</div>
+                <div className="action-divider">or</div>
+              </>
+            )}
 
             <div className="action-card join-card">
               <div className="action-icon">&#128279;</div>

@@ -26,7 +26,8 @@ export default function ProfileWidget() {
         <div className="profile-avatar">{initials}</div>
       )}
       <span className="profile-name">{user.displayName}</span>
-      <button className="profile-logout" onClick={logout} title="Sign out">
+      {user.isGuest && <span className="profile-guest-tag">guest</span>}
+      <button className="profile-logout" onClick={logout} title={user.isGuest ? 'Leave' : 'Sign out'}>
         &times;
       </button>
     </div>

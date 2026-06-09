@@ -248,6 +248,7 @@ export default function RetroPage() {
                       {pIsActiveHost && <span className="lead-badge">lead</span>}
                       {p.isHost && !pIsActiveHost && <span className="host-badge">host</span>}
                       {pIsCoHost && <span className="cohost-badge">co-host</span>}
+                      {p.isGuest && <span className="guest-badge">guest</span>}
                     </div>
                   </div>
                   <span className="retro-participant-card-count" title="Cards added">

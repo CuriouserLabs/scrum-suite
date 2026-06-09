@@ -18,6 +18,7 @@ export interface UserContextValue {
   loading: boolean;
   login: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
+  loginAsGuest: (displayName: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 

@@ -38,6 +38,11 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
       if (left) return;
 
       if (!snap.exists()) {
+        // Guests can only join existing sessions, never create one.
+        if (user.isGuest) {
+          setStatus('disconnected');
+          return;
+        }
         await setDoc(roomRef, {
           hostId: user.id,
           activeHostId: user.id,
@@ -48,6 +53,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
               photoURL: user.photoURL || null,
               isHost: true,
               online: true,
+              isGuest: false,
             },
           },
           participantIds: [user.id],
@@ -88,6 +94,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
               photoURL: user.photoURL || null,
               isHost: isOriginalHost,
               online: true,
+              isGuest: user.isGuest,
             },
             participantIds: arrayUnion(user.id),
           });
@@ -142,7 +149,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
         }).catch(() => {});
       }
     };
-  }, [roomId, user.id, user.displayName, user.photoURL]);
+  }, [roomId, user.id, user.displayName, user.photoURL, user.isGuest]);
 
   const isEnded = () => roomStateRef.current?.status === 'ended';
 
