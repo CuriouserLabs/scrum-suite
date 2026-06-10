@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import type { KeyboardEvent } from 'react';
 import type { ActionItem, PreviousRetroSummary } from '../types';
 import './PreviousActionItems.css';
 
@@ -13,7 +12,6 @@ interface ImportResult {
 interface PreviousActionItemsProps {
   items: Record<string, ActionItem>;
   isHost: boolean;
-  onAdd: (text: string) => void;
   onToggle: (itemId: string) => void;
   onDelete: (itemId: string) => void;
   onFetchPreviousRetros: () => Promise<PreviousRetroSummary[]>;
@@ -36,23 +34,15 @@ function formatSessionDate(date: Date) {
 }
 
 export default function PreviousActionItems({
-  items, isHost, onAdd, onToggle, onDelete,
+  items, isHost, onToggle, onDelete,
   onFetchPreviousRetros, onImportActionItems,
 }: PreviousActionItemsProps) {
-  const [adding, setAdding] = useState(false);
-  const [newText, setNewText] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const [importOpen, setImportOpen] = useState(false);
   const [previousRetros, setPreviousRetros] = useState<PreviousRetroSummary[]>([]);
   const [loadingRetros, setLoadingRetros] = useState(false);
   const [importing, setImporting] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const importRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (adding && textareaRef.current) textareaRef.current.focus();
-  }, [adding]);
 
   useEffect(() => {
     if (!importOpen) return;
@@ -97,19 +87,6 @@ export default function PreviousActionItems({
       console.error('Failed to import action items:', err);
       setImporting(null);
     }
-  };
-
-  const handleSubmit = () => {
-    const trimmed = newText.trim();
-    if (!trimmed) return;
-    onAdd(trimmed);
-    setNewText('');
-    setAdding(false);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
-    if (e.key === 'Escape') { setNewText(''); setAdding(false); }
   };
 
   const sorted = Object.entries(items)
@@ -180,11 +157,12 @@ export default function PreviousActionItems({
       )}
 
       <div className="retro-column__cards">
-        {sorted.length === 0 && !isHost && (
-          <p className="retro-column__empty">No previous action items</p>
-        )}
-        {sorted.length === 0 && isHost && !importOpen && (
-          <p className="retro-column__empty">No previous action items</p>
+        {sorted.length === 0 && !(isHost && importOpen) && (
+          <p className="retro-column__empty">
+            {isHost
+              ? 'No previous action items — import them from an earlier retro above.'
+              : 'No previous action items'}
+          </p>
         )}
         {sorted.map((item) => (
           <div key={item.id} className={`pai-item ${item.done ? 'pai-item--done' : ''}`}>
@@ -208,47 +186,6 @@ export default function PreviousActionItems({
             )}
           </div>
         ))}
-      </div>
-
-      <div className="retro-column__add">
-        {adding ? (
-          <div className="retro-column__add-form">
-            <textarea
-              ref={textareaRef}
-              className="retro-column__add-input"
-              placeholder="Describe the action item..."
-              value={newText}
-              onChange={(e) => setNewText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              maxLength={500}
-              rows={3}
-            />
-            <div className="retro-column__add-actions">
-              <button
-                className="retro-column__add-submit"
-                onClick={handleSubmit}
-                disabled={!newText.trim()}
-                style={{ background: COLUMN_COLOR }}
-              >
-                Add
-              </button>
-              <button
-                className="retro-column__add-cancel"
-                onClick={() => { setNewText(''); setAdding(false); }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className="retro-column__add-btn"
-            onClick={() => setAdding(true)}
-            style={{ color: COLUMN_COLOR }}
-          >
-            + Add a card
-          </button>
-        )}
       </div>
     </div>
   );
