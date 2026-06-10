@@ -8,6 +8,7 @@ import RetroColumn from '../components/RetroColumn';
 import RetroHostControls from '../components/RetroHostControls';
 import RetroTimer from '../components/RetroTimer';
 import PreviousActionItems from '../components/PreviousActionItems';
+import ExportMenu from '../components/ExportMenu';
 import type { CardWithId, Column } from '../types';
 import './RetroPage.css';
 
@@ -210,6 +211,7 @@ export default function RetroPage() {
           <button className="copy-btn" onClick={copyLink}>
             {copied ? '✓ Copied!' : '🔗 Copy Link'}
           </button>
+          <ExportMenu retroState={retroState} retroId={retroId!} viewerId={user.id} />
           {isHost && (
             <button
               className={`btn-end-session ${confirmingEnd ? 'confirming' : ''}`}
