@@ -265,19 +265,6 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     }).catch(console.error);
   }, [retroId]);
 
-  const addActionItem = useCallback((text: string) => {
-    if (isEnded()) return;
-    const itemId = nanoid(12);
-    updateDoc(doc(db, 'retros', retroId), {
-      [`previousActionItems.${itemId}`]: {
-        text,
-        done: false,
-        authorId: user.id,
-        createdAt: Date.now(),
-      },
-    }).catch(console.error);
-  }, [retroId, user.id]);
-
   const toggleActionItem = useCallback((itemId: string) => {
     if (isEnded()) return;
     const current = retroStateRef.current;
@@ -363,7 +350,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,
-    addActionItem, toggleActionItem, deleteActionItem,
+    toggleActionItem, deleteActionItem,
     fetchPreviousRetros, importActionItems,
   };
 }

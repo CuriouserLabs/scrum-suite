@@ -60,7 +60,6 @@ export interface UseRetroResult {
   handoverTo: (userId: string) => void;
   startTimer: (duration: number) => void;
   stopTimer: () => void;
-  addActionItem: (text: string) => void;
   toggleActionItem: (itemId: string) => void;
   deleteActionItem: (itemId: string) => void;
   fetchPreviousRetros: () => Promise<PreviousRetroSummary[]>;
