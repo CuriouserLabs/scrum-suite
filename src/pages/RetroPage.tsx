@@ -27,7 +27,7 @@ export default function RetroPage() {
     addCard, deleteCard, editCard, toggleVote,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
-    addActionItem, toggleActionItem, deleteActionItem,
+    toggleActionItem, deleteActionItem,
     fetchPreviousRetros, importActionItems,
   } = useRetro(retroId!, user);
 
@@ -295,7 +295,6 @@ export default function RetroPage() {
                 <PreviousActionItems
                   items={retroState.previousActionItems || {}}
                   isHost={isHost}
-                  onAdd={addActionItem}
                   onToggle={toggleActionItem}
                   onDelete={deleteActionItem}
                   onFetchPreviousRetros={fetchPreviousRetros}
