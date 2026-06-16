@@ -4,13 +4,32 @@ A real-time agile toolkit for scrum teams. Run sprint planning poker sessions an
 
 ## Features
 
+### Sprint Poker (planning poker)
+
 - **Instant rooms** — generate a room with one click and share the URL
-- **Real-time sync** — powered by Firestore; works on any network including corporate firewalls
 - **Fibonacci voting** — standard planning poker values: 0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ?
 - **Hidden votes** — cards stay face-down until the host reveals them
-- **Co-host support** — host can promote any participant to co-host so the session survives if the host disconnects
+- **Vote insights** — average plus a vote distribution chart once cards are revealed
 - **Story titles** — host can label what's being estimated each round
-- **Persistent identity** — display name saved in browser; no re-login on refresh
+- **Co-host support** — host can promote any participant to co-host so the session survives if the host disconnects
+
+### Retro Board
+
+- **Team retrospectives** — run retro boards alongside planning, with a per-board title
+- **Export** — download a board as CSV, Markdown, or plain text
+- **Previous action items** — review action items from past retros and import them into the current board
+
+### Accounts & sessions
+
+- **Google sign-in** — user profiles via Firebase Authentication
+- **Guest access** — join a session with just a display name, no account required
+- **Persistent sessions** — sessions are saved so you can actively rejoin where you left off
+- **Live presence** — see participant online/offline status in real time
+- **Host controls** — end a session when the team is done
+
+### Across the suite
+
+- **Real-time sync** — powered by Firestore; works on any network including corporate firewalls
 - **Multiple simultaneous rooms** — each team gets an isolated session
 
 ## Tech stack
