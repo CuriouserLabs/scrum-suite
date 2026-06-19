@@ -53,6 +53,10 @@ export function useSessionHistory(userId: string): SessionHistory {
     let cancelled = false;
 
     async function load() {
+      // Reset to a loading state inside the async fetch (not synchronously in
+      // the effect body) so re-fetches on userId change show the spinner
+      // without triggering a cascading-render lint warning.
+      setHistory((h) => ({ ...h, loading: true, error: false }));
       try {
         const [roomSnap, retroSnap] = await Promise.all([
           getDocs(query(
@@ -102,7 +106,6 @@ export function useSessionHistory(userId: string): SessionHistory {
       }
     }
 
-    setHistory((h) => ({ ...h, loading: true, error: false }));
     load();
 
     return () => { cancelled = true; };
