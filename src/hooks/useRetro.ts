@@ -83,7 +83,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
           previousActionItems: {},
           settings: {
             anonymous: false,
-            hideCards: false,
+            hideCards: true,
             revealed: false,
           },
           timer: { duration: 0, startedAt: 0, running: false },

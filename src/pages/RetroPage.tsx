@@ -29,10 +29,12 @@ export default function RetroPage() {
     startTimer, stopTimer,
     toggleActionItem, deleteActionItem,
     fetchPreviousRetros, importActionItems,
+    makeCoHost, handoverTo,
   } = useRetro(retroId!, user);
 
   const isHost = role === 'host';
   const activeHostId = retroState?.activeHostId || retroState?.hostId;
+  const isActiveHost = activeHostId === user.id; // current holder of primary control
 
   const [localTitle, setLocalTitle] = useState('');
   const titleSourceRef = useRef<'remote' | 'local'>('remote');
@@ -253,9 +255,31 @@ export default function RetroPage() {
                       {p.isGuest && <span className="guest-badge">guest</span>}
                     </div>
                   </div>
-                  <span className="retro-participant-card-count" title="Cards added">
-                    {cardCount}
-                  </span>
+                  <div className="retro-participant-actions">
+                    {/* Handover — only the active host can transfer primary control */}
+                    {isActiveHost && !isMe && (
+                      <button
+                        className="handover-btn"
+                        onClick={() => handoverTo(p.id)}
+                        title={`Hand over control to ${p.displayName}`}
+                      >
+                        →
+                      </button>
+                    )}
+                    {/* Co-host toggle — any host can manage backup hosts */}
+                    {isHost && !p.isHost && (
+                      <button
+                        className={`cohost-toggle ${pIsCoHost ? 'active' : ''}`}
+                        onClick={() => makeCoHost(p.id)}
+                        title={pIsCoHost ? 'Remove co-host' : 'Make co-host'}
+                      >
+                        {pIsCoHost ? '★' : '☆'}
+                      </button>
+                    )}
+                    <span className="retro-participant-card-count" title="Cards added">
+                      {cardCount}
+                    </span>
+                  </div>
                 </div>
               );
             })}

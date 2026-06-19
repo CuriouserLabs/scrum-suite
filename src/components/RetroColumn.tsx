@@ -55,7 +55,10 @@ export default function RetroColumn({
     }
   };
 
-  const sorted = [...cards].sort((a, b) => a.createdAt - b.createdAt);
+  const sorted = [...cards].sort((a, b) => {
+    const byName = a.authorName.localeCompare(b.authorName);
+    return byName !== 0 ? byName : a.createdAt - b.createdAt;
+  });
 
   return (
     <div className="retro-column">
