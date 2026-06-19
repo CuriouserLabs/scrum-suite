@@ -174,6 +174,28 @@ export interface ActiveSession {
   round?: number;
 }
 
+/** Shared fields for an ended session shown in the history list. */
+export interface HistorySessionBase {
+  id: string;
+  createdAt: Date | null;
+  isHost: boolean;
+  totalParticipants: number;
+}
+
+/** A past Sprint Poker session in the history list. */
+export interface PokerHistorySession extends HistorySessionBase {
+  storyTitle?: string;
+}
+
+/** A past Retro Board session in the history list. Carries the normalized
+ *  state so the row can offer the same board export as an active retro. */
+export interface RetroHistorySession extends HistorySessionBase {
+  title: string;
+  cardCount: number;
+  /** Normalized state (participants as an array) for `ExportMenu`. */
+  state: RetroState;
+}
+
 /** A summary of a previous retro available for action-item import. */
 export interface PreviousRetroSummary {
   id: string;
