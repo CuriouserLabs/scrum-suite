@@ -47,3 +47,24 @@ from production builds automatically (`import.meta.env.DEV` gate).
 - `npm run deploy:rules:dev` / `deploy:rules:prod` — Firestore rules only
 - `npm run deploy:indexes:dev` / `deploy:indexes:prod` — Firestore indexes only
 - GitHub Actions: `deploy-production.yml` (main) and `deploy-development.yml` (development) — both manual trigger only
+
+## Feature Roadmap & Implementation Order
+
+We're building toward a complete Scrum suite. Existing: Sprint Poker, Retro Board, Auth.
+Planned work is tracked as 16 GitHub Issues (#61–#77) across 5 epics. **Implement in the
+order below — it follows hard dependencies. If asked to start out of order, point out the
+unmet dependency before proceeding.**
+
+1. **Epic A — Teams / Workspaces** (foundation; everything scopes to a team)
+   - #61 data model + rules → #62 CRUD UI → #63 invites & roles → #64 scope rooms/retros to team
+2. **Epic B — Session History** (read-only archive; reuses existing retro export + carry-forward)
+   - #65 archive model (needs #64) → #66 list UI → #67 read-only detail view
+3. **Epic C — Sprint Planning & Backlog** (list-based, **no Kanban**)
+   - #68 data model + rules (needs #61) → #69 list UI → #70 sprints + assignment → #71 link Poker estimates → points (needs #64)
+4. **Epic D — Daily Standup (async)**
+   - #72 data model + rules (needs #61) → #73 entry UI → #74 team feed/digest
+5. **Epic E — Sprint Analytics**
+   - #75 aggregation layer (needs #70 + #65) → #76 burndown chart → #77 velocity & estimate-accuracy charts
+
+**Start here after a break:** the lowest-numbered open issue whose dependencies are all
+closed — begin with #61 if nothing is done yet. Within an epic, follow the arrow order.

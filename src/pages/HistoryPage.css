@@ -1,0 +1,234 @@
+.history-page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.history-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-bottom: 0.5rem;
+  transition: color 0.2s;
+}
+
+.history-back:hover {
+  color: var(--text-light);
+}
+
+.history-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+
+.history-sub {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ── Tabs ── */
+.history-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.history-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.6rem 0.5rem;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.history-tab:hover {
+  color: var(--text-light);
+}
+
+.history-tab.active {
+  color: var(--text-light);
+  border-bottom-color: var(--primary);
+}
+
+.history-tab-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.05rem 0.45rem;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+/* ── Body & states ── */
+.history-body {
+  min-height: 200px;
+}
+
+.history-state {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.history-state--error {
+  color: #f87171;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.history-empty-icon {
+  font-size: 2.2rem;
+  opacity: 0.5;
+}
+
+.history-empty p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+.history-empty-hint {
+  font-size: 0.8rem;
+}
+
+/* ── List ── */
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.history-item[data-mode="retro"] {
+  border-left-color: var(--retro-accent);
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.history-item-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.history-item-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-item-code {
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-host {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: rgba(245, 158, 11, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.history-item-story {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.history-item-dot {
+  opacity: 0.5;
+}
+
+.history-item-actions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 540px) {
+  .history-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .history-item-actions {
+    align-self: flex-end;
+  }
+}

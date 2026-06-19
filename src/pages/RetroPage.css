@@ -336,6 +336,60 @@
   flex-shrink: 0;
 }
 
+/* Actions slot: holds handover + cohost-toggle + card count */
+.retro-participant-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.retro-participant-actions .handover-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.15);
+  padding: 0.1rem 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.retro-participant:hover .handover-btn {
+  color: rgba(99, 102, 241, 0.6);
+}
+
+.retro-participant-actions .handover-btn:hover {
+  color: var(--primary) !important;
+  transform: translateX(2px);
+}
+
+.retro-participant-actions .cohost-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.15);
+  padding: 0.1rem 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.retro-participant:hover .cohost-toggle:not(.active) {
+  color: rgba(251, 191, 36, 0.5);
+}
+
+.retro-participant-actions .cohost-toggle:hover {
+  color: #fbbf24 !important;
+  transform: scale(1.2);
+}
+
+.retro-participant-actions .cohost-toggle.active {
+  color: #fbbf24;
+}
+
 .retro-participants-hint {
   color: var(--text-muted);
   font-size: 0.75rem;
