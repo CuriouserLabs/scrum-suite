@@ -11,6 +11,7 @@ interface RetroCardProps {
   isHost: boolean;
   anonymous: boolean;
   hideCards: boolean;
+  hideOwnCards: boolean;
   revealed: boolean;
   onDelete: (cardId: string) => void;
   onEdit: (cardId: string, newText: string) => void;
@@ -19,7 +20,7 @@ interface RetroCardProps {
 
 export default function RetroCard({
   card, cardId, columnColor, userId, isHost,
-  anonymous, hideCards, revealed,
+  anonymous, hideCards, hideOwnCards, revealed,
   onDelete, onEdit, onToggleVote,
 }: RetroCardProps) {
   const [editing, setEditing] = useState(false);
@@ -29,7 +30,9 @@ export default function RetroCard({
   const isAuthor = card.authorId === userId;
   const hasVoted = card.votes?.includes(userId);
   const voteCount = card.votes?.length || 0;
-  const isHidden = hideCards && !revealed && !isAuthor;
+  // Hidden when the host hides everyone's cards (for non-authors), or when this
+  // viewer has opted to hide their own cards while sharing their screen.
+  const isHidden = !revealed && ((hideCards && !isAuthor) || (hideOwnCards && isAuthor));
 
   useEffect(() => {
     if (editing && textareaRef.current) {

@@ -127,6 +127,12 @@
   white-space: nowrap;
 }
 
+/* Anchor wrapper so the screen-share tip can point at the toggle */
+.retro-controls__hide-own {
+  position: relative;
+  display: inline-flex;
+}
+
 /* ── Reveal button ── */
 .retro-controls__reveal-btn {
   padding: 0.4rem 1rem;
