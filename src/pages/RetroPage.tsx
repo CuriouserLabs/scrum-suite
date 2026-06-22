@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthUser } from '../contexts/UserContext';
 import { useRetro } from '../hooks/useRetro';
+import { useScreenShareTip } from '../hooks/useScreenShareTip';
 import { getColumnById } from '../utils/retroColumns';
 import ConnectionStatus from '../components/ConnectionStatus';
 import RetroColumn from '../components/RetroColumn';
@@ -35,6 +36,21 @@ export default function RetroPage() {
   const isHost = role === 'host';
   const activeHostId = retroState?.activeHostId || retroState?.hostId;
   const isActiveHost = activeHostId === user.id; // current holder of primary control
+
+  // Local, per-viewer "hide my own cards" mode for hosts sharing their screen.
+  // Other participants' view is unaffected, so it's never written to Firestore.
+  const [hideOwnCards, setHideOwnCards] = useState(false);
+
+  // Coach tip pointing at the toggle: shown once when the host creates the retro
+  // (status 'ready'), or to a co-host the first time they hold that role. The
+  // hook latches on the first truthy trigger and remembers dismissal per session,
+  // so a co-host who only reloads won't see it again.
+  const amCoHost = !!retroState?.coHosts?.includes(user.id);
+  const isOriginalHost = retroState?.hostId === user.id;
+  const { show: showTip, dismiss: dismissTip } = useScreenShareTip(
+    retroId ? `sst:retro:${retroId}:${user.id}` : null,
+    status === 'ready' || (amCoHost && !isOriginalHost),
+  );
 
   const [localTitle, setLocalTitle] = useState('');
   const titleSourceRef = useRef<'remote' | 'local'>('remote');
@@ -308,6 +324,7 @@ export default function RetroPage() {
                   isHost={isHost}
                   anonymous={retroState.settings?.anonymous}
                   hideCards={retroState.settings?.hideCards}
+                  hideOwnCards={hideOwnCards}
                   revealed={retroState.settings?.revealed}
                   onAddCard={addCard}
                   onDeleteCard={deleteCard}
@@ -338,6 +355,10 @@ export default function RetroPage() {
             updateColumns={updateColumns}
             updateSettings={updateSettings}
             revealCards={revealCards}
+            hideOwn={hideOwnCards}
+            onToggleHideOwn={() => setHideOwnCards((v) => !v)}
+            showTip={showTip}
+            onDismissTip={dismissTip}
           />
         ) : (
           <p className="retro-guest-note">Add your thoughts to the columns above</p>

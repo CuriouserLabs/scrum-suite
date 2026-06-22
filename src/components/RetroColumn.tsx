@@ -11,6 +11,7 @@ interface RetroColumnProps {
   isHost: boolean;
   anonymous: boolean;
   hideCards: boolean;
+  hideOwnCards: boolean;
   revealed: boolean;
   onAddCard: (columnId: string, text: string) => void;
   onDeleteCard: (cardId: string) => void;
@@ -20,7 +21,7 @@ interface RetroColumnProps {
 
 export default function RetroColumn({
   column, cards, userId, isHost,
-  anonymous, hideCards, revealed,
+  anonymous, hideCards, hideOwnCards, revealed,
   onAddCard, onDeleteCard, onEditCard, onToggleVote,
 }: RetroColumnProps) {
   const [adding, setAdding] = useState(false);
@@ -79,6 +80,7 @@ export default function RetroColumn({
             isHost={isHost}
             anonymous={anonymous}
             hideCards={hideCards}
+            hideOwnCards={hideOwnCards}
             revealed={revealed}
             onDelete={onDeleteCard}
             onEdit={onEditCard}
