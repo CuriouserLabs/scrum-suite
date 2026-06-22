@@ -7,13 +7,16 @@ interface VotingDeckProps {
   selectedValue: VoteValue | undefined;
   onVote: (value: VoteValue) => void;
   disabled: boolean;
+  /** When true, the picked card is not highlighted — used by hosts who are
+   *  sharing their screen so the deck doesn't reveal their estimate. */
+  hideSelection?: boolean;
 }
 
-export default function VotingDeck({ selectedValue, onVote, disabled }: VotingDeckProps) {
+export default function VotingDeck({ selectedValue, onVote, disabled, hideSelection }: VotingDeckProps) {
   return (
     <div className="voting-deck">
       {FIBONACCI.map((value) => {
-        const selected = selectedValue === value;
+        const selected = !hideSelection && selectedValue === value;
         return (
           <button
             key={value}

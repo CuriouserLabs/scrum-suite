@@ -1,5 +1,6 @@
 import { ALL_COLUMNS } from '../utils/retroColumns';
 import type { RetroState, RetroSettings } from '../types';
+import ScreenShareTip from './ScreenShareTip';
 import './RetroHostControls.css';
 
 interface RetroHostControlsProps {
@@ -7,10 +8,16 @@ interface RetroHostControlsProps {
   updateColumns: (columnIds: string[]) => void;
   updateSettings: (partial: Partial<RetroSettings>) => void;
   revealCards: () => void;
+  /** Per-viewer "hide my own cards" mode (local, not shared). */
+  hideOwn: boolean;
+  onToggleHideOwn: () => void;
+  showTip: boolean;
+  onDismissTip: () => void;
 }
 
 export default function RetroHostControls({
   retroState, updateColumns, updateSettings, revealCards,
+  hideOwn, onToggleHideOwn, showTip, onDismissTip,
 }: RetroHostControlsProps) {
   const settings: Partial<RetroSettings> = retroState?.settings || {};
   const activeColumnIds = retroState?.columns || [];
@@ -105,6 +112,22 @@ export default function RetroHostControls({
           />
           <span className="retro-controls__toggle-label">Hide until reveal</span>
         </label>
+
+        <div className="retro-controls__hide-own">
+          <label className="retro-controls__toggle">
+            <input
+              type="checkbox"
+              checked={hideOwn}
+              onChange={onToggleHideOwn}
+            />
+            <span className="retro-controls__toggle-label">🙈 Hide my cards</span>
+          </label>
+          <ScreenShareTip
+            show={showTip}
+            message={'Sharing your screen? Turn on "Hide my cards" so your notes stay private until you reveal.'}
+            onDismiss={onDismissTip}
+          />
+        </div>
       </div>
 
       {/* Reveal button */}

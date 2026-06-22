@@ -3,9 +3,11 @@ import type { ChangeEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthUser } from '../contexts/UserContext';
 import { useRoom } from '../hooks/useRoom';
+import { useScreenShareTip } from '../hooks/useScreenShareTip';
 import ConnectionStatus from '../components/ConnectionStatus';
 import VotingDeck from '../components/VotingDeck';
 import VoteBoard from '../components/VoteBoard';
+import ScreenShareTip from '../components/ScreenShareTip';
 import './RoomPage.css';
 
 export default function RoomPage() {
@@ -51,6 +53,23 @@ export default function RoomPage() {
   const isActiveHost = activeHostId === user.id; // current holder of primary control
   const myVote = roomState?.votes?.[user.id];
   const hasAnyVote = roomState && Object.keys(roomState.votes).length > 0;
+
+  // Local, per-viewer "hide my own vote" mode for hosts sharing their screen.
+  // It only affects this user's deck — other participants already can't see
+  // unrevealed votes — so it's never written to Firestore.
+  const [hideMyVote, setHideMyVote] = useState(false);
+  const hidingMyVote = hideMyVote && !roomState?.revealed;
+
+  // Coach tip pointing at the toggle: shown once when the host creates the room
+  // (status 'ready'), or to a co-host the first time they hold that role. The
+  // hook latches on the first truthy trigger and remembers dismissal per session,
+  // so a co-host who only reloads won't see it again.
+  const amCoHost = !!roomState?.coHosts?.includes(user.id);
+  const isOriginalHost = roomState?.hostId === user.id;
+  const { show: showTip, dismiss: dismissTip } = useScreenShareTip(
+    roomId ? `sst:poker:${roomId}:${user.id}` : null,
+    status === 'ready' || (amCoHost && !isOriginalHost),
+  );
 
   // Local story title — prevents cursor-jump from Firestore echo
   const [localTitle, setLocalTitle] = useState('');
@@ -294,6 +313,8 @@ export default function RoomPage() {
                 <p className="voting-hint">
                   {roomState.revealed
                     ? 'Round complete — host can start a new round'
+                    : hidingMyVote
+                    ? '🙈 Your vote is hidden on this screen — safe to share'
                     : myVote !== undefined
                     ? 'Your vote is in — change it anytime before reveal'
                     : 'Pick your estimate'}
@@ -302,6 +323,7 @@ export default function RoomPage() {
                   selectedValue={myVote}
                   onVote={submitVote}
                   disabled={roomState.revealed}
+                  hideSelection={hidingMyVote}
                 />
               </div>
             </>
@@ -314,6 +336,21 @@ export default function RoomPage() {
         {isHost ? (
           <>
             <div className="footer-round-badge">Round {roomState?.round ?? 1}</div>
+            <div className="hide-own-wrap">
+              <label className="hide-own-toggle">
+                <input
+                  type="checkbox"
+                  checked={hideMyVote}
+                  onChange={() => setHideMyVote((v) => !v)}
+                />
+                <span className="hide-own-toggle__label">🙈 Hide my vote</span>
+              </label>
+              <ScreenShareTip
+                show={showTip}
+                message={'Sharing your screen? Turn on "Hide my vote" so your estimate stays private until you reveal.'}
+                onDismiss={dismissTip}
+              />
+            </div>
             <button
               className="btn-reveal"
               onClick={revealVotes}
