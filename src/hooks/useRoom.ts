@@ -4,6 +4,7 @@ import {
   serverTimestamp, arrayUnion, arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
+import { startPresenceHeartbeat, isParticipantOnline } from '../utils/presence';
 import type {
   User, Role, ConnectionState, RoomDoc, RoomState, VoteValue, UseRoomResult,
 } from '../types';
@@ -15,6 +16,9 @@ function normalizeState(data: RoomDoc | undefined): RoomState | null {
     participants: Object.entries(data.participants || {}).map(([id, p]) => ({
       id,
       ...p,
+      // Derive presence from the heartbeat so a participant who closed their
+      // browser/tab without a clean leave shows as offline once it goes stale.
+      online: isParticipantOnline(p),
     })),
   };
 }
@@ -29,6 +33,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
   useEffect(() => {
     const roomRef = doc(db, 'rooms', roomId);
     let unsubscribe: (() => void) | null = null;
+    let stopHeartbeat: (() => void) | null = null;
     let left = false;
     joinedRef.current = false;
 
@@ -53,6 +58,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
               photoURL: user.photoURL || null,
               isHost: true,
               online: true,
+              lastActive: serverTimestamp(),
               isGuest: false,
             },
           },
@@ -84,6 +90,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
         if (data.participants?.[user.id]) {
           await updateDoc(roomRef, {
             [`participants.${user.id}.online`]: true,
+            [`participants.${user.id}.lastActive`]: serverTimestamp(),
             [`participants.${user.id}.displayName`]: user.displayName,
             [`participants.${user.id}.photoURL`]: user.photoURL || null,
           });
@@ -94,6 +101,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
               photoURL: user.photoURL || null,
               isHost: isOriginalHost,
               online: true,
+              lastActive: serverTimestamp(),
               isGuest: user.isGuest,
             },
             participantIds: arrayUnion(user.id),
@@ -104,6 +112,10 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
       }
 
       if (left) return;
+
+      // Keep presence fresh while this tab is open so a browser/tab closed
+      // without a clean leave is reliably detected as offline by others.
+      stopHeartbeat = startPresenceHeartbeat(roomRef, user.id);
 
       unsubscribe = onSnapshot(roomRef, (snap) => {
         if (!snap.exists()) {
@@ -142,6 +154,7 @@ export function useRoom(roomId: string, user: User): UseRoomResult {
     return () => {
       left = true;
       unsubscribe?.();
+      stopHeartbeat?.();
       // Don't mark offline if the session was ended — it's frozen.
       if (joinedRef.current && roomStateRef.current?.status !== 'ended') {
         updateDoc(roomRef, {

@@ -7,6 +7,7 @@ import {
 import { nanoid } from 'nanoid';
 import { db } from '../utils/firebase';
 import { DEFAULT_COLUMN_IDS, ACTION_ITEMS_COLUMN_ID } from '../utils/retroColumns';
+import { startPresenceHeartbeat, isParticipantOnline } from '../utils/presence';
 import type {
   User, Role, ConnectionState, RetroDoc, RetroState, RetroSettings,
   ActionItem, PreviousRetroSummary, UseRetroResult,
@@ -35,6 +36,9 @@ function normalizeState(data: RetroDoc | undefined): RetroState | null {
     participants: Object.entries(data.participants || {}).map(([id, p]) => ({
       id,
       ...p,
+      // Derive presence from the heartbeat so a participant who closed their
+      // browser/tab without a clean leave shows as offline once it goes stale.
+      online: isParticipantOnline(p),
     })),
   };
 }
@@ -49,6 +53,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
   useEffect(() => {
     const retroRef = doc(db, 'retros', retroId);
     let unsubscribe: (() => void) | null = null;
+    let stopHeartbeat: (() => void) | null = null;
     let left = false;
     joinedRef.current = false;
 
@@ -73,6 +78,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
               photoURL: user.photoURL || null,
               isHost: true,
               online: true,
+              lastActive: serverTimestamp(),
               isGuest: false,
             },
           },
@@ -108,6 +114,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
         if (data.participants?.[user.id]) {
           await updateDoc(retroRef, {
             [`participants.${user.id}.online`]: true,
+            [`participants.${user.id}.lastActive`]: serverTimestamp(),
             [`participants.${user.id}.displayName`]: user.displayName,
             [`participants.${user.id}.photoURL`]: user.photoURL || null,
           });
@@ -118,6 +125,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
               photoURL: user.photoURL || null,
               isHost: data.hostId === user.id,
               online: true,
+              lastActive: serverTimestamp(),
               isGuest: user.isGuest,
             },
             participantIds: arrayUnion(user.id),
@@ -128,6 +136,10 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
       }
 
       if (left) return;
+
+      // Keep presence fresh while this tab is open so a browser/tab closed
+      // without a clean leave is reliably detected as offline by others.
+      stopHeartbeat = startPresenceHeartbeat(retroRef, user.id);
 
       unsubscribe = onSnapshot(retroRef, (snap) => {
         if (!snap.exists()) {
@@ -166,6 +178,7 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     return () => {
       left = true;
       unsubscribe?.();
+      stopHeartbeat?.();
       // Don't mark offline if the session was ended — it's frozen.
       if (joinedRef.current && retroStateRef.current?.status !== 'ended') {
         updateDoc(retroRef, {
