@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../utils/firebase';
+import { isParticipantOnline } from '../utils/presence';
 import { useAuthUser } from '../contexts/UserContext';
 import type { ActiveSession, RoomDoc } from '../types';
 import './HomePage.css';
@@ -29,7 +30,7 @@ function useActiveSessions(userId: string, mode: Mode | null) {
       const results: ActiveSession[] = snap.docs.map((d) => {
         const data = d.data() as RoomDoc;
         const participants = Object.entries(data.participants || {});
-        const onlineCount = participants.filter(([, p]) => p.online).length;
+        const onlineCount = participants.filter(([, p]) => isParticipantOnline(p)).length;
         return {
           id: d.id,
           totalParticipants: participants.length,
