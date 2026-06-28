@@ -63,12 +63,18 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: vote-9f5e2
+      - name: Deploy to Firebase Hosting
+        run: |
+          set +e
+          OUT=$(npx --yes firebase-tools@15.22.3 deploy \
+                  --only hosting --project vote-9f5e2 --non-interactive 2>&1)
+          CODE=$?
+          echo "$OUT"
+          if [ $CODE -ne 0 ] && echo "$OUT" | grep -q "is the current active version"; then
+            echo "::warning::Release already applied server-side; treating duplicate-retry 400 as success."
+            exit 0
+          fi
+          exit $CODE
 
       - name: Create annotated tag
         run: |
