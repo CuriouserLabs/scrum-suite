@@ -46,6 +46,10 @@ export interface ParticipantData {
   photoURL: string | null;
   isHost: boolean;
   online: boolean;
+  /** Server timestamp of this participant's most recent presence heartbeat.
+   *  Used to detect tabs closed without a clean leave — see `presence.ts`.
+   *  Optional for sessions created before heartbeats existed. */
+  lastActive?: Timestamp | null;
   /** True when this participant joined as an anonymous guest. */
   isGuest: boolean;
 }
