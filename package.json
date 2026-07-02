@@ -19,7 +19,7 @@
     "deploy:indexes:prod": "firebase use production && firebase deploy --only firestore:indexes"
   },
   "dependencies": {
-    "firebase": "^12.13.0",
+    "firebase": "^12.15.0",
     "nanoid": "^5.1.16",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
