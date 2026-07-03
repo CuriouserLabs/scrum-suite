@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Participant } from '../types';
 import { truncateAssigneeName } from '../utils/assignee';
 import './AssigneeSelect.css';
@@ -15,18 +16,68 @@ interface AssigneeSelectProps {
   accentColor?: string;
 }
 
+const MENU_WIDTH = 200;
+const MENU_MAX_HEIGHT = 240;
+const GAP = 4;
+const VIEWPORT_MARGIN = 8;
+
+interface MenuPos {
+  left: number;
+  top: number;
+  /** 'up' anchors the menu's bottom to the trigger's top. */
+  placement: 'up' | 'down';
+}
+
 export default function AssigneeSelect({
   participants, assigneeId, assigneeName, canAssign, onAssign, accentColor,
 }: AssigneeSelectProps) {
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<MenuPos | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // The menu is portalled to <body> so it can escape the retro column's
+  // `overflow: hidden` / scrolling card list (which otherwise clip it). That
+  // means we position it manually against the trigger's viewport rect, and
+  // flip it above the trigger when there isn't room below.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const placeUp = spaceBelow < MENU_MAX_HEIGHT + GAP && spaceAbove > spaceBelow;
+
+      let left = rect.left;
+      if (left + MENU_WIDTH > window.innerWidth - VIEWPORT_MARGIN) {
+        left = window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN;
+      }
+      if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+
+      setPos({
+        left,
+        top: placeUp ? rect.top - GAP : rect.bottom + GAP,
+        placement: placeUp ? 'up' : 'down',
+      });
+    };
+    update();
+    // Keep it pinned to the trigger while the card list / page scrolls.
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -47,36 +98,45 @@ export default function AssigneeSelect({
     ? { borderColor: `${accentColor}66`, color: accentColor }
     : undefined;
 
-  const chip = (
-    <span className="assignee-chip__icon" aria-hidden="true">👤</span>
-  );
+  const icon = <span className="assignee-chip__icon" aria-hidden="true">👤</span>;
 
   if (!canAssign) {
     return (
       <span className="assignee-chip assignee-chip--static" style={chipStyle} title={`Assigned to ${displayName}`}>
-        {chip}
+        {icon}
         <span className="assignee-chip__name">{truncateAssigneeName(displayName)}</span>
       </span>
     );
   }
 
   return (
-    <div className="assignee-select" ref={wrapRef}>
+    <>
       <button
+        ref={triggerRef}
         type="button"
         className={`assignee-chip ${isAssigned ? 'assignee-chip--assigned' : 'assignee-chip--empty'}`}
         style={chipStyle}
         onClick={() => setOpen((v) => !v)}
         title={isAssigned ? `Assigned to ${displayName} — click to reassign` : 'Assign to a member'}
       >
-        {chip}
+        {icon}
         <span className="assignee-chip__name">
           {isAssigned ? truncateAssigneeName(displayName) : 'Assign'}
         </span>
       </button>
 
-      {open && (
-        <div className="assignee-menu">
+      {open && pos && createPortal(
+        <div
+          ref={menuRef}
+          className="assignee-menu"
+          style={{
+            left: pos.left,
+            top: pos.top,
+            width: MENU_WIDTH,
+            maxHeight: MENU_MAX_HEIGHT,
+            transform: pos.placement === 'up' ? 'translateY(-100%)' : undefined,
+          }}
+        >
           <button
             type="button"
             className={`assignee-menu__item ${!assigneeId ? 'assignee-menu__item--active' : ''}`}
@@ -101,8 +161,9 @@ export default function AssigneeSelect({
           {isAssigned && assigneeId && !participants.some((p) => p.id === assigneeId) && (
             <div className="assignee-menu__note">Currently: {displayName} (not in session)</div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   );
 }
