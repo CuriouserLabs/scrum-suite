@@ -70,6 +70,12 @@ export interface Card {
   authorId: string;
   votes: string[];
   createdAt: number;
+  /** Assigned owner's user id. Only set on Action Item cards, and only by a
+   *  host/co-host. `null`/absent means unassigned. */
+  assigneeId?: string | null;
+  /** Snapshot of the assignee's display name at assignment time, so it survives
+   *  the assignee leaving the session or being carried into a later retro. */
+  assigneeName?: string | null;
 }
 
 /** A card enriched with its id and resolved author name for rendering. */
@@ -84,6 +90,12 @@ export interface ActionItem {
   done: boolean;
   authorId: string;
   createdAt: number;
+  /** Assigned owner's user id. May reference someone no longer in the session
+   *  (e.g. carried over from an earlier retro). `null`/absent means unassigned. */
+  assigneeId?: string | null;
+  /** Snapshot of the assignee's display name — shown even when the assignee
+   *  isn't a participant of the current session. */
+  assigneeName?: string | null;
 }
 
 /** An action item enriched with its id for rendering. */

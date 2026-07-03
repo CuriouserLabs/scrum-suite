@@ -53,6 +53,8 @@ export interface UseRetroResult {
   deleteCard: (cardId: string) => void;
   editCard: (cardId: string, newText: string) => void;
   toggleVote: (cardId: string) => void;
+  /** Assign an Action Item card to a participant, or clear it with `null`. */
+  assignCard: (cardId: string, assigneeId: string | null) => void;
   updateColumns: (columnIds: string[]) => void;
   updateSettings: (partial: Partial<RetroSettings>) => void;
   revealCards: () => void;
@@ -62,6 +64,8 @@ export interface UseRetroResult {
   stopTimer: () => void;
   toggleActionItem: (itemId: string) => void;
   deleteActionItem: (itemId: string) => void;
+  /** Assign a previous action item to a participant, or clear it with `null`. */
+  assignActionItem: (itemId: string, assigneeId: string | null) => void;
   fetchPreviousRetros: () => Promise<PreviousRetroSummary[]>;
   importActionItems: (sourceRetroId: string) => Promise<number>;
 }

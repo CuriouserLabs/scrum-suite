@@ -40,12 +40,25 @@
   border-color: #14b8a6;
 }
 
-.pai-item__text {
+.pai-item__body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.pai-item__text {
   font-size: 0.85rem;
   color: var(--text-light);
   line-height: 1.45;
   word-break: break-word;
+}
+
+.pai-item__assignee {
+  display: flex;
+  max-width: 100%;
 }
 
 .pai-item__delete {

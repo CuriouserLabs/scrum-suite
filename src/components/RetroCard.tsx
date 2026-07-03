@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
-import type { CardWithId } from '../types';
+import type { CardWithId, Participant } from '../types';
+import AssigneeSelect from './AssigneeSelect';
 import './RetroCard.css';
 
 interface RetroCardProps {
@@ -13,15 +14,20 @@ interface RetroCardProps {
   hideCards: boolean;
   hideOwnCards: boolean;
   revealed: boolean;
+  /** True for Action Item cards — enables the assignee chip. */
+  assignable: boolean;
+  participants: Participant[];
   onDelete: (cardId: string) => void;
   onEdit: (cardId: string, newText: string) => void;
   onToggleVote: (cardId: string) => void;
+  onAssign: (cardId: string, assigneeId: string | null) => void;
 }
 
 export default function RetroCard({
   card, cardId, columnColor, userId, isHost,
   anonymous, hideCards, hideOwnCards, revealed,
-  onDelete, onEdit, onToggleVote,
+  assignable, participants,
+  onDelete, onEdit, onToggleVote, onAssign,
 }: RetroCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(card.text);
@@ -113,6 +119,19 @@ export default function RetroCard({
         />
       ) : (
         <p className="retro-card__text">{card.text}</p>
+      )}
+
+      {assignable && !editing && (
+        <div className="retro-card__assignee">
+          <AssigneeSelect
+            participants={participants}
+            assigneeId={card.assigneeId}
+            assigneeName={card.assigneeName}
+            canAssign={isHost}
+            onAssign={(assigneeId) => onAssign(cardId, assigneeId)}
+            accentColor={columnColor}
+          />
+        </div>
       )}
 
       <div className="retro-card__footer">

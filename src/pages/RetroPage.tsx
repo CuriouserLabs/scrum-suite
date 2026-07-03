@@ -25,10 +25,10 @@ export default function RetroPage() {
   const {
     retroState, status, role,
     endSession, updateTitle,
-    addCard, deleteCard, editCard, toggleVote,
+    addCard, deleteCard, editCard, toggleVote, assignCard,
     updateColumns, updateSettings, revealCards,
     startTimer, stopTimer,
-    toggleActionItem, deleteActionItem,
+    toggleActionItem, deleteActionItem, assignActionItem,
     fetchPreviousRetros, importActionItems,
     makeCoHost, handoverTo,
   } = useRetro(retroId!, user);
@@ -326,18 +326,22 @@ export default function RetroPage() {
                   hideCards={retroState.settings?.hideCards}
                   hideOwnCards={hideOwnCards}
                   revealed={retroState.settings?.revealed}
+                  participants={retroState.participants}
                   onAddCard={addCard}
                   onDeleteCard={deleteCard}
                   onEditCard={editCard}
                   onToggleVote={toggleVote}
+                  onAssignCard={assignCard}
                 />
               ))}
               {showPreviousActionItems && (
                 <PreviousActionItems
                   items={retroState.previousActionItems || {}}
                   isHost={isHost}
+                  participants={retroState.participants}
                   onToggle={toggleActionItem}
                   onDelete={deleteActionItem}
+                  onAssign={assignActionItem}
                   onFetchPreviousRetros={fetchPreviousRetros}
                   onImportActionItems={importActionItems}
                 />
