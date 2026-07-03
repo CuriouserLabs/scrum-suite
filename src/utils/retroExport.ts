@@ -11,6 +11,8 @@ interface ExportCard {
   votes: number;
   /** Defined only for action-item style columns (e.g. Previous Action Items). */
   done?: boolean;
+  /** Assigned owner's name, for action items. Empty when unassigned. */
+  assignee?: string;
 }
 
 /** One board column with its visible cards, ready to serialize. */
@@ -48,7 +50,10 @@ export function buildBoardExport(retro: RetroState, viewerId: string): ExportSec
     if (columnId === PREVIOUS_ACTIONS_ID) {
       const items = Object.values(retro.previousActionItems || {})
         .sort((a, b) => a.createdAt - b.createdAt)
-        .map((item) => ({ text: item.text, author: '', votes: 0, done: item.done }));
+        .map((item) => ({
+          text: item.text, author: '', votes: 0, done: item.done,
+          assignee: item.assigneeName || '',
+        }));
       sections.push({ label: column.label, icon: column.icon, cards: items });
       continue;
     }
@@ -57,7 +62,10 @@ export function buildBoardExport(retro: RetroState, viewerId: string): ExportSec
       .filter((c) => c.columnId === columnId)
       .filter((c) => !(hidden && c.authorId !== viewerId))
       .sort((a, b) => a.createdAt - b.createdAt)
-      .map((c) => ({ text: c.text, author: nameOf(c.authorId), votes: c.votes?.length || 0 }));
+      .map((c) => ({
+        text: c.text, author: nameOf(c.authorId), votes: c.votes?.length || 0,
+        assignee: c.assigneeName || '',
+      }));
     sections.push({ label: column.label, icon: column.icon, cards });
   }
 
@@ -96,9 +104,11 @@ export function toMarkdown(retro: RetroState, retroId: string, viewerId: string)
     for (const card of section.cards) {
       const text = card.text.replace(/\r?\n/g, ' ').trim();
       if (card.done !== undefined) {
-        lines.push(`- [${card.done ? 'x' : ' '}] ${text}`);
+        const owner = card.assignee ? ` — _${card.assignee}_` : '';
+        lines.push(`- [${card.done ? 'x' : ' '}] ${text}${owner}`);
       } else {
         const meta: string[] = [];
+        if (card.assignee) meta.push(`→ ${card.assignee}`);
         if (card.author) meta.push(card.author);
         if (card.votes > 0) meta.push(`${card.votes} ${card.votes === 1 ? 'vote' : 'votes'}`);
         lines.push(`- ${text}${meta.length ? ` _(${meta.join(', ')})_` : ''}`);
@@ -122,7 +132,7 @@ function csvCell(value: string): string {
 export function toCsv(retro: RetroState, _retroId: string, viewerId: string): string {
   const sections = buildBoardExport(retro, viewerId);
   const rows: string[] = [];
-  rows.push(['Column', 'Card', 'Author', 'Votes', 'Status'].join(','));
+  rows.push(['Column', 'Card', 'Author', 'Assignee', 'Votes', 'Status'].join(','));
 
   for (const section of sections) {
     for (const card of section.cards) {
@@ -132,6 +142,7 @@ export function toCsv(retro: RetroState, _retroId: string, viewerId: string): st
         csvCell(section.label),
         csvCell(text),
         csvCell(card.author),
+        csvCell(card.assignee || ''),
         card.votes ? String(card.votes) : '',
         csvCell(status),
       ].join(','));
@@ -160,9 +171,11 @@ export function toText(retro: RetroState, retroId: string, viewerId: string): st
       for (const card of section.cards) {
         const text = card.text.replace(/\r?\n/g, ' ').trim();
         if (card.done !== undefined) {
-          lines.push(`  [${card.done ? 'x' : ' '}] ${text}`);
+          const owner = card.assignee ? ` — ${card.assignee}` : '';
+          lines.push(`  [${card.done ? 'x' : ' '}] ${text}${owner}`);
         } else {
           const meta: string[] = [];
+          if (card.assignee) meta.push(`-> ${card.assignee}`);
           if (card.author) meta.push(card.author);
           if (card.votes > 0) meta.push(`${card.votes} ${card.votes === 1 ? 'vote' : 'votes'}`);
           lines.push(`  - ${text}${meta.length ? ` (${meta.join(', ')})` : ''}`);

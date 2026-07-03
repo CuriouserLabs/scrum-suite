@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import type { ActionItem, PreviousRetroSummary } from '../types';
+import type { ActionItem, Participant, PreviousRetroSummary } from '../types';
+import AssigneeSelect from './AssigneeSelect';
 import './PreviousActionItems.css';
 
 const COLUMN_COLOR = '#14b8a6';
@@ -12,8 +13,10 @@ interface ImportResult {
 interface PreviousActionItemsProps {
   items: Record<string, ActionItem>;
   isHost: boolean;
+  participants: Participant[];
   onToggle: (itemId: string) => void;
   onDelete: (itemId: string) => void;
+  onAssign: (itemId: string, assigneeId: string | null) => void;
   onFetchPreviousRetros: () => Promise<PreviousRetroSummary[]>;
   onImportActionItems: (sourceRetroId: string) => Promise<number>;
 }
@@ -34,7 +37,7 @@ function formatSessionDate(date: Date) {
 }
 
 export default function PreviousActionItems({
-  items, isHost, onToggle, onDelete,
+  items, isHost, participants, onToggle, onDelete, onAssign,
   onFetchPreviousRetros, onImportActionItems,
 }: PreviousActionItemsProps) {
   const [importOpen, setImportOpen] = useState(false);
@@ -174,7 +177,19 @@ export default function PreviousActionItems({
             >
               {item.done ? '✓' : ''}
             </button>
-            <span className="pai-item__text">{item.text}</span>
+            <div className="pai-item__body">
+              <span className="pai-item__text">{item.text}</span>
+              <div className="pai-item__assignee">
+                <AssigneeSelect
+                  participants={participants}
+                  assigneeId={item.assigneeId}
+                  assigneeName={item.assigneeName}
+                  canAssign={isHost}
+                  onAssign={(assigneeId) => onAssign(item.id, assigneeId)}
+                  accentColor={COLUMN_COLOR}
+                />
+              </div>
+            </div>
             {isHost && (
               <button
                 className="pai-item__delete"

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import RetroCard from './RetroCard';
-import type { Column, CardWithId } from '../types';
+import { ACTION_ITEMS_COLUMN_ID } from '../utils/retroColumns';
+import type { Column, CardWithId, Participant } from '../types';
 import './RetroColumn.css';
 
 interface RetroColumnProps {
@@ -13,17 +14,20 @@ interface RetroColumnProps {
   hideCards: boolean;
   hideOwnCards: boolean;
   revealed: boolean;
+  participants: Participant[];
   onAddCard: (columnId: string, text: string) => void;
   onDeleteCard: (cardId: string) => void;
   onEditCard: (cardId: string, newText: string) => void;
   onToggleVote: (cardId: string) => void;
+  onAssignCard: (cardId: string, assigneeId: string | null) => void;
 }
 
 export default function RetroColumn({
   column, cards, userId, isHost,
-  anonymous, hideCards, hideOwnCards, revealed,
-  onAddCard, onDeleteCard, onEditCard, onToggleVote,
+  anonymous, hideCards, hideOwnCards, revealed, participants,
+  onAddCard, onDeleteCard, onEditCard, onToggleVote, onAssignCard,
 }: RetroColumnProps) {
+  const assignable = column.id === ACTION_ITEMS_COLUMN_ID;
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -82,9 +86,12 @@ export default function RetroColumn({
             hideCards={hideCards}
             hideOwnCards={hideOwnCards}
             revealed={revealed}
+            assignable={assignable}
+            participants={participants}
             onDelete={onDeleteCard}
             onEdit={onEditCard}
             onToggleVote={onToggleVote}
+            onAssign={onAssignCard}
           />
         ))}
         {cards.length === 0 && (

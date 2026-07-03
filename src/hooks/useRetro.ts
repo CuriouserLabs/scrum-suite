@@ -13,20 +13,32 @@ import type {
   ActionItem, PreviousRetroSummary, UseRetroResult,
 } from '../types';
 
+/** An action item worth carrying into a new session, with its assignee. */
+interface ImportableActionItem {
+  text: string;
+  assigneeId: string | null;
+  assigneeName: string | null;
+}
+
 /**
  * Action items worth carrying into a new session from a previous retro. This is
  * the combination of both tabs: the live "Action Items" cards added during that
  * session, plus its still-pending "Previous Action Items" (which were themselves
- * carried over from even earlier sessions). Returns the texts in creation order.
+ * carried over from even earlier sessions). Returns them in creation order, each
+ * with its assignee preserved (the assignee may not be in the new session).
  */
-function collectImportableActionItems(data: RetroDoc): string[] {
+function collectImportableActionItems(data: RetroDoc): ImportableActionItem[] {
   const actionCards = Object.values(data.cards || {})
     .filter((c) => c.columnId === ACTION_ITEMS_COLUMN_ID);
   const pendingPrevious = Object.values(data.previousActionItems || {})
     .filter((i) => !i.done);
   return [...actionCards, ...pendingPrevious]
     .sort((a, b) => a.createdAt - b.createdAt)
-    .map((i) => i.text);
+    .map((i) => ({
+      text: i.text,
+      assigneeId: i.assigneeId ?? null,
+      assigneeName: i.assigneeName ?? null,
+    }));
 }
 
 function normalizeState(data: RetroDoc | undefined): RetroState | null {
@@ -230,6 +242,20 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     }).catch(console.error);
   }, [retroId]);
 
+  // Assign (or clear) the owner of an Action Item card. Passing null clears it.
+  // The assignee's display name is snapshotted so it survives them leaving.
+  const assignCard = useCallback((cardId: string, assigneeId: string | null) => {
+    if (isEnded()) return;
+    const current = retroStateRef.current;
+    const assignee = assigneeId
+      ? current?.participants.find((p) => p.id === assigneeId)
+      : null;
+    updateDoc(doc(db, 'retros', retroId), {
+      [`cards.${cardId}.assigneeId`]: assigneeId,
+      [`cards.${cardId}.assigneeName`]: assignee?.displayName ?? null,
+    }).catch(console.error);
+  }, [retroId]);
+
   const toggleVote = useCallback((cardId: string) => {
     if (isEnded()) return;
     const current = retroStateRef.current;
@@ -288,6 +314,20 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     }).catch(console.error);
   }, [retroId]);
 
+  // Assign (or clear) the owner of a previous action item. The assignee may be
+  // someone not in the session; only names of current participants are offered.
+  const assignActionItem = useCallback((itemId: string, assigneeId: string | null) => {
+    if (isEnded()) return;
+    const current = retroStateRef.current;
+    const assignee = assigneeId
+      ? current?.participants.find((p) => p.id === assigneeId)
+      : null;
+    updateDoc(doc(db, 'retros', retroId), {
+      [`previousActionItems.${itemId}.assigneeId`]: assigneeId,
+      [`previousActionItems.${itemId}.assigneeName`]: assignee?.displayName ?? null,
+    }).catch(console.error);
+  }, [retroId]);
+
   const deleteActionItem = useCallback((itemId: string) => {
     if (isEnded()) return;
     updateDoc(doc(db, 'retros', retroId), {
@@ -340,30 +380,34 @@ export function useRetro(retroId: string, user: User): UseRetroResult {
     if (isEnded()) return 0;
     const snap = await getDoc(doc(db, 'retros', sourceRetroId));
     if (!snap.exists()) return 0;
-    const texts = collectImportableActionItems(snap.data() as RetroDoc);
-    if (texts.length === 0) return 0;
+    const importable = collectImportableActionItems(snap.data() as RetroDoc);
+    if (importable.length === 0) return 0;
     const updates: Record<string, ActionItem> = {};
-    texts.forEach((text, idx) => {
+    importable.forEach((item, idx) => {
       const newId = nanoid(12);
       updates[`previousActionItems.${newId}`] = {
-        text,
+        text: item.text,
         done: false,
         authorId: user.id,
+        // Carry the assignee across so it's visible in the new session, even if
+        // that person hasn't (or won't) join it.
+        assigneeId: item.assigneeId,
+        assigneeName: item.assigneeName,
         // Preserve ordering with monotonically increasing timestamps.
         createdAt: Date.now() + idx,
       };
     });
     await updateDoc(doc(db, 'retros', retroId), updates);
-    return texts.length;
+    return importable.length;
   }, [retroId, user.id]);
 
   return {
     retroState, status, role,
     endSession, updateTitle,
-    addCard, deleteCard, editCard, toggleVote,
+    addCard, deleteCard, editCard, toggleVote, assignCard,
     updateColumns, updateSettings, revealCards,
     makeCoHost, handoverTo, startTimer, stopTimer,
-    toggleActionItem, deleteActionItem,
+    toggleActionItem, deleteActionItem, assignActionItem,
     fetchPreviousRetros, importActionItems,
   };
 }
