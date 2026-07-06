@@ -7,7 +7,7 @@ import {
 import { nanoid } from 'nanoid';
 import { db } from '../utils/firebase';
 import { DEFAULT_COLUMN_IDS, ACTION_ITEMS_COLUMN_ID } from '../utils/retroColumns';
-import { startPresenceHeartbeat, isParticipantOnline } from '../utils/presence';
+import { startPresenceHeartbeat, isParticipantOnline, compareParticipants } from '../utils/presence';
 import type {
   User, Role, ConnectionState, RetroDoc, RetroState, RetroSettings,
   ActionItem, PreviousRetroSummary, UseRetroResult,
@@ -51,7 +51,7 @@ function normalizeState(data: RetroDoc | undefined): RetroState | null {
       // Derive presence from the heartbeat so a participant who closed their
       // browser/tab without a clean leave shows as offline once it goes stale.
       online: isParticipantOnline(p),
-    })),
+    })).sort(compareParticipants),
   };
 }
 
