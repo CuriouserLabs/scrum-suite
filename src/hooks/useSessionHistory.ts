@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../utils/firebase';
+import { compareParticipants } from '../utils/presence';
 import type {
   RoomDoc,
   RetroDoc,
@@ -24,7 +25,7 @@ function toRetroState(data: RetroDoc): RetroState {
     participants: Object.entries(data.participants || {}).map(([id, p]) => ({
       id,
       ...p,
-    })),
+    })).sort(compareParticipants),
   };
 }
 

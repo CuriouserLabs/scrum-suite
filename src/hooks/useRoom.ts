@@ -4,7 +4,7 @@ import {
   serverTimestamp, arrayUnion, arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
-import { startPresenceHeartbeat, isParticipantOnline } from '../utils/presence';
+import { startPresenceHeartbeat, isParticipantOnline, compareParticipants } from '../utils/presence';
 import type {
   User, Role, ConnectionState, RoomDoc, RoomState, VoteValue, UseRoomResult,
 } from '../types';
@@ -19,7 +19,7 @@ function normalizeState(data: RoomDoc | undefined): RoomState | null {
       // Derive presence from the heartbeat so a participant who closed their
       // browser/tab without a clean leave shows as offline once it goes stale.
       online: isParticipantOnline(p),
-    })),
+    })).sort(compareParticipants),
   };
 }
 
