@@ -2,7 +2,7 @@ import {
   updateDoc, serverTimestamp,
   type DocumentReference, type Timestamp,
 } from 'firebase/firestore';
-import type { ParticipantData } from '../types';
+import type { ParticipantData, Participant } from '../types';
 
 // ===============================================================
 // Presence (online/offline) via heartbeat
@@ -45,6 +45,26 @@ export function isParticipantOnline(
   const lastMs = toMillis(p.lastActive);
   if (lastMs === null) return true;
   return nowMs - lastMs < OFFLINE_THRESHOLD_MS;
+}
+
+/**
+ * Stable ordering for the participant list.
+ *
+ * `normalizeState` builds the array from `Object.entries(participants)`, but a
+ * Firestore map has no guaranteed key order across snapshots — when any nested
+ * field updates (a vote, a new card, a presence heartbeat) the keys can come
+ * back in a different order, making the rendered list visibly reshuffle. Sorting
+ * on immutable/stable keys pins the order so those unrelated updates never move
+ * anyone: host first, then by display name, with the (immutable) id as the
+ * final tiebreaker for full determinism.
+ */
+export function compareParticipants(a: Participant, b: Participant): number {
+  if (a.isHost !== b.isHost) return a.isHost ? -1 : 1;
+  const byName = a.displayName.localeCompare(b.displayName, undefined, {
+    sensitivity: 'base',
+  });
+  if (byName !== 0) return byName;
+  return a.id.localeCompare(b.id);
 }
 
 /**
