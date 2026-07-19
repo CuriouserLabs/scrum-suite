@@ -19,7 +19,7 @@
     "deploy:indexes:prod": "firebase use production && firebase deploy --only firestore:indexes"
   },
   "dependencies": {
-    "firebase": "^12.15.0",
+    "firebase": "^12.16.0",
     "nanoid": "^5.1.16",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -27,16 +27,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "eslint": "^10.5.0",
+    "eslint": "^10.7.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.6.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.1",
-    "vite": "^8.1.3"
+    "vite": "^8.1.5"
   }
 }
