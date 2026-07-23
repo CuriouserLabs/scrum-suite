@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "firebase": "^12.16.0",
-    "nanoid": "^5.1.16",
+    "nanoid": "^6.0.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.18.0"
